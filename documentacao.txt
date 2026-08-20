@@ -1,0 +1,73 @@
+ANÁLISE DE ENTREGA DE SPED — documentação técnica
+====================================================
+
+ORIGEM DOS DADOS
+-----------------
+Intranet MG (aplicativo.mgcontecnica.com.br) > tile "MG Controle" >
+Operacional > (seção "Menu SPED") > Relatórios > Relatório Gerencial.
+
+Tela: http://intranetmg/Aplicativos/Geral/Controle/Obrigacao/Sped/Relatorio/RelatorioGerencial.aspx
+Campos confirmados em teste real (2026-08-20):
+  - Tipo relatório (select2 #ddlTipoRelatorio): só tem "Totalizador".
+  - Tipo SPED (select2 #ddlTipo): ICMS(1) / Contribuições(2) / Contábil(3) / ECF(4).
+  - Data Inicial / Data Final (#txtDataInicial / #txtDataFinal): texto livre DD/MM/AAAA.
+  - Botão Exportar: <a class="btn btn-darkRed pull-right">, sem id, chama
+    namespace.ExportarRelatorio(ddlTipoRelatorio, ddlTipo, txtDataInicial, txtDataFinal)
+    e dispara download em background (sem abrir nova aba/iframe visível).
+
+Nome do arquivo baixado (confirmado com ICMS real): RelatorioTotalizador_{Tipo}-{AAAA-MM-DD}.xlsx.
+O robô não depende do nome exato — limpa a pasta temp antes de cada export e
+pega o único .xlsx novo.
+
+Cada exportação tem 2 abas, mesmas 27 colunas:
+  BaseSPEDPedente (obrigações ainda pendentes) e BaseSPEDOk (já entregues).
+Colunas: Id, IdCliente, IdTipoSped, RazaoSocial, Grupo, GerenteDeContas,
+GerenteMaster, RegimeTributario, Retaguarda, Tarefa, Comentario,
+ResponsavelManipulacao, ResponsavelPadrao, Situacao, IsPendente,
+Departamento, Estagio, Competencia, Ano, DataVencimento,
+DataAlteracaoEstagio, Mes, DtSaida, Detalhe, Unidade, Segmento, Quantidade.
+
+REGRA DE VENCIMENTO (informada pelo usuário, confirmada nos dados reais)
+-------------------------------------------------------------------------
+- SPED ICMS vence no mês seguinte à competência (competência 07 → vence 08).
+- SPED Contribuições vence 2 meses depois da competência (competência 07 → vence 09).
+- O próprio MG Controle já entrega DataVencimento calculada — não é
+  recalculada pelo robô/resumo.py, só usada.
+
+NAVEGAÇÃO CALIBRADA (seletores usados no robô)
+-------------------------------------------------
+1. driver.get("https://aplicativo.mgcontecnica.com.br/#/home") + login (#usuario/#senha, botão "Entrar").
+2. Clicar //h6[@title='MG Controle'] > nova janela > driver.switch_to.window(driver.window_handles[-1]).
+3. Clicar #ContentPlaceHolder1_BaixaObrigacaoLinkButton ("Operacional").
+4. Clicar #ContentPlaceHolder1_lnkSpedRelatorios ("Relatórios" dentro de Menu SPED —
+   NÃO confundir com o outro "Relatórios" do topo do menu lateral, que leva
+   a Relatorio/Default.aspx > Personalizados, usado por outro robô
+   (Analise-de-Balanco/backend/retorno_checklist.py) para um relatório diferente).
+5. Para cada Tipo SPED: abrir o select2 (#s2id_ddlTipo), clicar na opção
+   (li dentro de div#select2-drop) com o texto exato ("ICMS"/"Contribuições"),
+   preencher as duas datas, clicar no body pra fechar o calendário
+   sobreposto, clicar "Exportar", aguardar o novo .xlsx aparecer na pasta
+   temp (timeout 180s — o relatório de ~7-8 meses levou ~20-30s pra gerar
+   em teste real).
+
+PONTOS TESTADOS AO VIVO EM 2026-08-20
+----------------------------------------
+- Fluxo completo até o download real funcionando: Tipo SPED = ICMS,
+  01/01/2026 a 20/08/2026 → RelatorioTotalizador_ICMS-2026-08-20.xlsx
+  (1085863 bytes, 2059 linhas pendentes + 7620 entregues).
+- Seleção de "Contribuições" no select2 e envio das datas confirmados
+  visualmente (dropdown abre, mostra as 4 opções, campo aceita
+  DD/MM/AAAA sem precisar do calendário); o download real de
+  Contribuições NÃO foi confirmado nesta sessão (a segunda tentativa
+  de export não gerou arquivo novo — meramente uma falha da sessão de
+  teste, não do robô em si, já que usa exatamente a mesma tela/mecanismo
+  do ICMS que funcionou). Rodar o robô uma vez de verdade
+  (`python backend/orquestrador.py`) e conferir `data/analise_sped/
+  sped_contribuicoes.xlsx` antes de considerar 100% validado.
+
+DÚVIDAS EM ABERTO / PRÓXIMOS PASSOS
+--------------------------------------
+- Confirmar o download real de Contribuições numa primeira execução.
+- Decidir se o projeto deve ser hospedado (GitHub Pages) — repo ainda não
+  criado (ver [[reference_github_cli_org]] para o processo já usado nos
+  outros projetos MG).

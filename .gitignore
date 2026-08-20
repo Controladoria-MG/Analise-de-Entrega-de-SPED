@@ -1,0 +1,7 @@
+.env
+__pycache__/
+*.pyc
+.venv/
+*.log
+data/analise_sped/*.xlsx
+data/analise_sped/_temp/
