@@ -31,6 +31,7 @@ const el = {
   unidadeTopoLista: document.getElementById("unidade-topo-lista"),
   segmento: document.getElementById("f-segmento"),
   regime: document.getElementById("f-regime"),
+  competencia: document.getElementById("f-competencia"),
   depto: document.getElementById("f-depto"),
   status_: document.getElementById("f-status"),
   atraso: document.getElementById("f-atraso"),
@@ -50,6 +51,7 @@ const el = {
   tUnidade: document.getElementById("t-unidade"),
   tSegmento: document.getElementById("t-segmento"),
   tRegime: document.getElementById("t-regime"),
+  tCompetencia: document.getElementById("t-competencia"),
   tDepto: document.getElementById("t-depto"),
   tStatus: document.getElementById("t-status"),
   tAtraso: document.getElementById("t-atraso"),
@@ -78,6 +80,7 @@ function filtrarConjunto(conjunto, campos) {
   const unidadeUnica = campos.unidade.value;
   const segmento = campos.segmento.value;
   const regime = campos.regime.value;
+  const competencia = campos.competencia.value;
   const depto = campos.depto.value;
   const status = campos.status.value;
   const atraso = campos.atraso.value;
@@ -91,6 +94,7 @@ function filtrarConjunto(conjunto, campos) {
     }
     if (segmento && r.Segmento !== segmento) return false;
     if (regime && r.RegimeTributario !== regime) return false;
+    if (competencia && (!r.Competencia || !r.Competencia.startsWith(competencia))) return false;
     if (depto && r.Departamento !== depto) return false;
     if (gerente && r.GerenteDeContas !== gerente) return false;
     if (status && r.Status !== status) return false;
@@ -106,7 +110,7 @@ function filtrarConjunto(conjunto, campos) {
 function aplicarFiltros() {
   filtrados = filtrarConjunto(dadosTipo, {
     busca: el.busca, unidade: el.unidade, segmento: el.segmento,
-    regime: el.regime, depto: el.depto, status: el.status_, atraso: el.atraso, gerente: el.gerente,
+    regime: el.regime, competencia: el.competencia, depto: el.depto, status: el.status_, atraso: el.atraso, gerente: el.gerente,
   });
 
   renderizarQuebras();
@@ -158,7 +162,7 @@ function atualizarUnidadeTopoAtiva() {
 function aplicarFiltroTabela() {
   filtradosTabela = filtrarConjunto(dadosTipo, {
     busca: el.tBusca, unidade: el.tUnidade, segmento: el.tSegmento,
-    regime: el.tRegime, depto: el.tDepto, status: el.tStatus, atraso: el.tAtraso, gerente: el.tGerente,
+    regime: el.tRegime, competencia: el.tCompetencia, depto: el.tDepto, status: el.tStatus, atraso: el.tAtraso, gerente: el.tGerente,
   });
   paginaAtual = 1;
   renderizarTabela();
@@ -474,6 +478,14 @@ function formatarCompetencia(iso) {
   return data.toLocaleDateString("pt-BR", { month: "2-digit", year: "numeric" });
 }
 
+// Rótulo do <option> do filtro de Competência — o value do select é o
+// prefixo "AAAA-MM" (comparado com startsWith em filtrarConjunto), formatado
+// aqui como "MM/AAAA" pro usuário.
+function formatarCompetenciaMes(anoMes) {
+  const [ano, mes] = anoMes.split("-");
+  return `${mes}/${ano}`;
+}
+
 function formatarDataCurta2(iso) {
   if (!iso) return "—";
   return new Date(`${iso.slice(0, 10)}T00:00:00`).toLocaleDateString("pt-BR");
@@ -498,7 +510,7 @@ function renderizarTabela() {
           <td>${celula(r.RegimeTributario)}</td>
           <td>${formatarCompetencia(r.Competencia)}</td>
           <td>${formatarDataCurta2(r.DataVencimento)}</td>
-          <td>${celula(r.Status)}${r.Atrasado === "Atrasado" ? ` <span class="tag-atraso">Atrasado</span>` : ""}</td>
+          <td>${celula(r.Status)}</td>
         </tr>
       `;
     })
@@ -692,6 +704,7 @@ function selecionarTipoSped(tipo) {
   el.unidade.valores.clear();
   el.segmento.value = "";
   el.regime.value = "";
+  el.competencia.value = "";
   el.depto.value = "";
   el.status_.value = "";
   el.atraso.value = "";
@@ -700,14 +713,18 @@ function selecionarTipoSped(tipo) {
   el.tUnidade.value = "";
   el.tSegmento.value = "";
   el.tRegime.value = "";
+  el.tCompetencia.value = "";
   el.tDepto.value = "";
   el.tStatus.value = "";
   el.tAtraso.value = "";
   el.tGerente.value = "";
 
+  const competencias = new Set(dadosTipo.map((r) => r.Competencia && r.Competencia.slice(0, 7)).filter(Boolean));
+
   renderizarUnidadeTopo();
   repopularSelect(el.segmento, new Set(dadosTipo.map((r) => r.Segmento).filter(Boolean)));
   repopularSelect(el.regime, new Set(dadosTipo.map((r) => r.RegimeTributario).filter(Boolean)));
+  repopularSelect(el.competencia, competencias, formatarCompetenciaMes);
   repopularSelect(el.depto, new Set(dadosTipo.map((r) => r.Departamento).filter(Boolean)));
   repopularSelect(el.gerente, new Set(dadosTipo.map((r) => r.GerenteDeContas).filter(Boolean)));
   repopularSelect(el.status_, new Set(dadosTipo.map((r) => r.Status).filter(Boolean)));
@@ -715,6 +732,7 @@ function selecionarTipoSped(tipo) {
   repopularSelect(el.tUnidade, new Set(dadosTipo.map((r) => r.Unidade).filter(Boolean)), (v) => v.toUpperCase());
   repopularSelect(el.tSegmento, new Set(dadosTipo.map((r) => r.Segmento).filter(Boolean)));
   repopularSelect(el.tRegime, new Set(dadosTipo.map((r) => r.RegimeTributario).filter(Boolean)));
+  repopularSelect(el.tCompetencia, competencias, formatarCompetenciaMes);
   repopularSelect(el.tDepto, new Set(dadosTipo.map((r) => r.Departamento).filter(Boolean)));
   repopularSelect(el.tGerente, new Set(dadosTipo.map((r) => r.GerenteDeContas).filter(Boolean)));
   repopularSelect(el.tStatus, new Set(dadosTipo.map((r) => r.Status).filter(Boolean)));
@@ -725,12 +743,15 @@ function selecionarTipoSped(tipo) {
 }
 
 const UNIDADES_EXCLUIDAS = ["MG EXPRESS"];
+// Departamento excluído a pedido do usuário (2026-08-20) — não deve aparecer
+// em nenhum filtro, card, ranking, evolução ou tabela do portal.
+const DEPARTAMENTOS_EXCLUIDOS = ["MG - SANTOS"];
 
 function carregarDados() {
   fetch("data/analise_sped/analise_sped_dados.json?" + Date.now())
     .then((r) => r.json())
     .then((json) => {
-      dados = json.filter((r) => !UNIDADES_EXCLUIDAS.includes(r.Unidade));
+      dados = json.filter((r) => !UNIDADES_EXCLUIDAS.includes(r.Unidade) && !DEPARTAMENTOS_EXCLUIDOS.includes(r.Departamento));
       const tipos = renderizarTipoSpedAbas([...new Set(dados.map((r) => r.TipoSped).filter(Boolean))]);
       selecionarTipoSped(tipos[0] || null);
     })
@@ -739,7 +760,7 @@ function carregarDados() {
     });
 }
 
-[el.busca, el.segmento, el.regime, el.depto, el.status_, el.atraso, el.gerente].forEach((campo) => {
+[el.busca, el.segmento, el.regime, el.competencia, el.depto, el.status_, el.atraso, el.gerente].forEach((campo) => {
   campo.addEventListener("input", aplicarFiltros);
   campo.addEventListener("change", aplicarFiltros);
 });
@@ -749,6 +770,7 @@ el.limpar.addEventListener("click", () => {
   el.unidade.valores.clear();
   el.segmento.value = "";
   el.regime.value = "";
+  el.competencia.value = "";
   el.depto.value = "";
   el.status_.value = "";
   el.atraso.value = "";
@@ -756,7 +778,7 @@ el.limpar.addEventListener("click", () => {
   aplicarFiltros();
 });
 
-[el.tBusca, el.tUnidade, el.tSegmento, el.tRegime, el.tDepto, el.tStatus, el.tAtraso, el.tGerente].forEach((campo) => {
+[el.tBusca, el.tUnidade, el.tSegmento, el.tRegime, el.tCompetencia, el.tDepto, el.tStatus, el.tAtraso, el.tGerente].forEach((campo) => {
   campo.addEventListener("input", aplicarFiltroTabela);
   campo.addEventListener("change", aplicarFiltroTabela);
 });
@@ -766,6 +788,7 @@ el.tLimpar.addEventListener("click", () => {
   el.tUnidade.value = "";
   el.tSegmento.value = "";
   el.tRegime.value = "";
+  el.tCompetencia.value = "";
   el.tDepto.value = "";
   el.tStatus.value = "";
   el.tAtraso.value = "";
