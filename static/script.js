@@ -354,21 +354,21 @@ function renderizarCardsNavegacao(container, rows, chave, aoClicar, mensagemVazi
 // mesma identidade visual do Controle de Fechamentos. Reflete sempre o
 // escopo atual (unidade inteira, ou já recortado por departamento).
 //
-// 4 placares: Total / Entregue / Pendente / Vencidas. `Entregue + Pendente =
-// Total` (as 2 abas do export). "Vencidas" NÃO é o total de atrasados (esse
-// cruza Entregue/Pendente — a maioria já foi entregue, só que fora do prazo,
-// e um "Atrasado: 4.145" dava impressão errada de 4 mil problemas em aberto);
-// é só o subconjunto acionável: pendente E já passou do vencimento.
-// Clicáveis (filtram a tabela): Pendente e Vencidas.
+// 4 placares: Total / Entregue / Pendente / Atrasadas. `Entregue + Pendente =
+// Total` (as 2 abas do export). "Atrasadas" aqui NÃO é o total de atrasados
+// da base (esse cruza Entregue/Pendente — a maioria já foi entregue, só que
+// fora do prazo, e um "Atrasado: 4.145" dava impressão errada de 4 mil
+// problemas em aberto); é só o subconjunto acionável: pendente E já passou do
+// vencimento. Clicáveis (filtram a tabela): Pendente e Atrasadas.
 function renderizarPlacares(rows) {
   let entregue = 0;
   let pendente = 0;
-  let vencidas = 0;
+  let atrasadas = 0;
   rows.forEach((r) => {
     if (r.Status === "Entregue") entregue++;
     else if (r.Status === "Pendente") {
       pendente++;
-      if (r.Atrasado === "Atrasado") vencidas++;
+      if (r.Atrasado === "Atrasado") atrasadas++;
     }
   });
   const total = rows.length;
@@ -391,7 +391,7 @@ function renderizarPlacares(rows) {
       clicavel: true, pares: [["Status", "Pendente"]],
     },
     {
-      classe: "vencidas", valor: vencidas, label: "Vencidas", desc: pctDe(vencidas, pendente, "das pendentes"),
+      classe: "atrasadas", valor: atrasadas, label: "Atrasadas", desc: pctDe(atrasadas, pendente, "das pendentes"),
       clicavel: true, pares: [["Status", "Pendente"], ["Atrasado", "Atrasado"]],
     },
   ];
