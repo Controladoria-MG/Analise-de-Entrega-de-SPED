@@ -354,50 +354,51 @@ function renderizarCardsNavegacao(container, rows, chave, aoClicar, mensagemVazi
 // mesma identidade visual do Controle de Fechamentos. Reflete sempre o
 // escopo atual (unidade inteira, ou já recortado por departamento).
 //
-// Só 3 placares: Total / Entregue / Pendente (Entregue + Pendente = Total,
-// vêm das 2 abas do export). NÃO tem placar de "Atrasado" separado — atraso
-// cruza os dois (a maioria dos atrasados já foi entregue, só que fora do
-// prazo), então um card "Atrasado: 4.145" ao lado dos outros dava impressão
-// errada de 4 mil problemas em aberto. O número que interessa é o subconjunto
-// acionável (pendente E já vencido) — mostrado na descrição do card Pendente.
+// 4 placares: Total / Entregue / Pendente / Vencidas. `Entregue + Pendente =
+// Total` (as 2 abas do export). "Vencidas" NÃO é o total de atrasados (esse
+// cruza Entregue/Pendente — a maioria já foi entregue, só que fora do prazo,
+// e um "Atrasado: 4.145" dava impressão errada de 4 mil problemas em aberto);
+// é só o subconjunto acionável: pendente E já passou do vencimento.
+// Clicáveis (filtram a tabela): Pendente e Vencidas.
 function renderizarPlacares(rows) {
   let entregue = 0;
   let pendente = 0;
-  let pendenteVencido = 0;
+  let vencidas = 0;
   rows.forEach((r) => {
     if (r.Status === "Entregue") entregue++;
     else if (r.Status === "Pendente") {
       pendente++;
-      if (r.Atrasado === "Atrasado") pendenteVencido++;
+      if (r.Atrasado === "Atrasado") vencidas++;
     }
   });
   const total = rows.length;
   // Arredondamento "honesto": só mostra 0%/100% quando for exatamente isso —
-  // um valor pequeno mas não-zero nunca aparece como "0% do total", e um
-  // valor quase igual ao total nunca aparece como "100%" sem ser exato.
-  const pct = (v) => {
-    if (!total || v === 0) return "0% do total";
-    if (v === total) return "100% do total";
-    const arredondado = Math.min(99, Math.max(1, Math.round((v / total) * 100)));
-    return `${arredondado}% do total`;
+  // um valor pequeno mas não-zero nunca aparece como "0%", e um valor quase
+  // igual ao teto nunca aparece como "100%" sem ser exato.
+  const pctDe = (v, base, sufixo) => {
+    if (!base || v === 0) return `0% ${sufixo}`;
+    if (v === base) return `100% ${sufixo}`;
+    const arredondado = Math.min(99, Math.max(1, Math.round((v / base) * 100)));
+    return `${arredondado}% ${sufixo}`;
   };
   const escopoDesc = escopo.depto ? "do departamento" : "da unidade";
-  const descVencidas = pendenteVencido === 0
-    ? "nenhuma vencida"
-    : `${pendenteVencido.toLocaleString("pt-BR")} já vencida${pendenteVencido === 1 ? "" : "s"}`;
 
   const defs = [
     { classe: "total", valor: total, label: "Total de SPEDs", desc: escopoDesc, clicavel: false },
-    { classe: "entregue", valor: entregue, label: "Entregue", desc: pct(entregue), clicavel: false },
+    { classe: "entregue", valor: entregue, label: "Entregue", desc: pctDe(entregue, total, "do total"), clicavel: false },
     {
-      classe: "pendente", valor: pendente, label: "Pendente", desc: descVencidas,
-      clicavel: true, campo: "Status", filtroValor: "Pendente",
+      classe: "pendente", valor: pendente, label: "Pendente", desc: pctDe(pendente, total, "do total"),
+      clicavel: true, pares: [["Status", "Pendente"]],
+    },
+    {
+      classe: "vencidas", valor: vencidas, label: "Vencidas", desc: pctDe(vencidas, pendente, "das pendentes"),
+      clicavel: true, pares: [["Status", "Pendente"], ["Atrasado", "Atrasado"]],
     },
   ];
 
   el.placaresGrid.innerHTML = defs.map((p) => `
     <div class="placar ${p.classe}${p.clicavel ? " placar-clicavel" : ""}"
-      ${p.clicavel ? `data-campo="${p.campo}" data-valor="${p.filtroValor}"` : ""}>
+      ${p.clicavel ? `data-pares="${JSON.stringify(p.pares).replace(/"/g, "&quot;")}"` : ""}>
       <div class="placar-label">${p.label}</div>
       <div class="placar-valor">${p.valor.toLocaleString("pt-BR")}</div>
       <div class="placar-desc">${p.desc}</div>
@@ -405,7 +406,7 @@ function renderizarPlacares(rows) {
   `).join("");
 
   el.placaresGrid.querySelectorAll(".placar-clicavel").forEach((cardEl) => {
-    cardEl.addEventListener("click", () => alternarFiltroEMostrarTabela(cardEl.dataset.campo, cardEl.dataset.valor));
+    cardEl.addEventListener("click", () => filtrarPorVariosEMostrarTabela(JSON.parse(cardEl.dataset.pares)));
   });
 }
 

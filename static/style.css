@@ -306,6 +306,8 @@ main {
 .placar.entregue  .placar-valor { color: #1E8C3A; }
 .placar.pendente  { border-color: var(--mg-vermelho); }
 .placar.pendente  .placar-valor { color: var(--mg-vermelho); }
+.placar.vencidas  { border-color: var(--vermelho-profundo); }
+.placar.vencidas  .placar-valor { color: var(--vermelho-profundo); }
 
 #corpo-dashboard {
   display: flex;
