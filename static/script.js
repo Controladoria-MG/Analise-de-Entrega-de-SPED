@@ -528,6 +528,7 @@ function linhaTabela(r) {
       <td>${r._comp}</td>
       <td>${r._venc}</td>
       <td>${celula(r.Status)}</td>
+      <td>${celula(r.Estagio)}</td>
     </tr>
   `;
 }

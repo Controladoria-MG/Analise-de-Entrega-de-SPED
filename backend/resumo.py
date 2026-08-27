@@ -7,7 +7,10 @@ Cada arquivo bruto (`sped_icms.xlsx`/`sped_contribuicoes.xlsx`) tem duas
 abas confirmadas em teste real (2026-08-20): `BaseSPEDPedente` (obrigações
 ainda pendentes) e `BaseSPEDOk` (já entregues) — mesmas 27 colunas em
 ambas. Aqui elas viram uma coluna `Status` ("Pendente"/"Entregue") e os dois
-arquivos ganham `TipoSped` ("ICMS"/"Contribuições").
+arquivos ganham `TipoSped` ("ICMS"/"Contribuições"). A coluna `Estagio`
+(estágio granular da obrigação no MG Controle, ex. "19 - Arquivo não
+recebido") passa adiante só limpando a classificação redundante entre
+parênteses no fim.
 
 Regra de atraso: `DataVencimento` já vem calculada pelo próprio MG Controle
 (ICMS = competência + 1 mês; Contribuições = competência + 2 meses — regra
@@ -18,6 +21,7 @@ quem ainda está pendente, é hoje. `Atrasado` = "Atrasado" se a data de
 referência é posterior ao vencimento, senão "No Prazo".
 """
 
+import re
 from datetime import date
 from pathlib import Path
 
@@ -52,6 +56,19 @@ def _limpar_regime(valor):
     return str(valor).replace("Federal - ", "").replace("Federal -", "")
 
 
+# O `Estagio` bruto vem como "19 - Arquivo não recebido (Arquivo não
+# transmitido)" — a parte entre parênteses no fim é uma classificação
+# agregada (transmitido / não transmitido) que já está coberta pelo Status
+# (Entregue/Pendente). Mantém só o número + nome do estágio.
+_RE_ESTAGIO_PARENTESES = re.compile(r"\s*\([^()]*\)\s*$")
+
+
+def _limpar_estagio(valor):
+    if pd.isna(valor):
+        return valor
+    return _RE_ESTAGIO_PARENTESES.sub("", str(valor)).strip()
+
+
 def _ler_tipo(caminho: Path, tipo_nome: str) -> pd.DataFrame:
     abas = pd.read_excel(caminho, sheet_name=["BaseSPEDPedente", "BaseSPEDOk"])
     pendente = abas["BaseSPEDPedente"].copy()
@@ -74,6 +91,7 @@ def gerar_resumo(log=None) -> pd.DataFrame:
 
     df = pd.concat(partes, ignore_index=True)
     df["RegimeTributario"] = df["RegimeTributario"].apply(_limpar_regime)
+    df["Estagio"] = df["Estagio"].apply(_limpar_estagio)
 
     hoje = pd.Timestamp(date.today())
     data_referencia = df["DataAlteracaoEstagio"].dt.normalize()

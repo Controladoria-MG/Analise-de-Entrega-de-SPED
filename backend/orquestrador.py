@@ -24,7 +24,7 @@ COLUNAS_PORTAL = [
     "IdCliente", "Cliente", "Grupo", "Unidade", "Segmento", "Departamento",
     "GerenteDeContas", "GerenteMaster", "RegimeTributario", "TipoSped",
     "Competencia", "DataVencimento", "DataAlteracaoEstagio", "Status",
-    "Atrasado", "DiasAtraso",
+    "Estagio", "Atrasado", "DiasAtraso",
 ]
 
 
