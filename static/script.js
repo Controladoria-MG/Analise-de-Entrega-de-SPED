@@ -513,27 +513,53 @@ function formatarDataCurta2(iso) {
   return new Date(`${iso.slice(0, 10)}T00:00:00`).toLocaleDateString("pt-BR");
 }
 
-function renderizarTabela() {
-  el.corpo.innerHTML = filtradosTabela
-    .map((r) => {
-      return `
-        <tr>
-          <td>${nomeComId(r.IdCliente, r.Cliente)}</td>
-          <td>${celula(r.Grupo)}</td>
-          <td>${celula(r.Unidade ? r.Unidade.toUpperCase() : r.Unidade)}</td>
-          <td>${celula(r.Segmento)}</td>
-          <td>${celula(r.GerenteDeContas)}</td>
-          <td>${celula(r.Departamento)}</td>
-          <td>${celula(r.RegimeTributario)}</td>
-          <td>${formatarCompetencia(r.Competencia)}</td>
-          <td>${formatarDataCurta2(r.DataVencimento)}</td>
-          <td>${celula(r.Status)}</td>
-        </tr>
-      `;
-    })
-    .join("");
+// Usa as células pré-formatadas em carregarDados (`_cli`/`_uni`/`_comp`/
+// `_venc`) — o resto é `celula()`, que é só string.
+function linhaTabela(r) {
+  return `
+    <tr>
+      <td>${r._cli}</td>
+      <td>${celula(r.Grupo)}</td>
+      <td>${celula(r._uni)}</td>
+      <td>${celula(r.Segmento)}</td>
+      <td>${celula(r.GerenteDeContas)}</td>
+      <td>${celula(r.Departamento)}</td>
+      <td>${celula(r.RegimeTributario)}</td>
+      <td>${r._comp}</td>
+      <td>${r._venc}</td>
+      <td>${celula(r.Status)}</td>
+    </tr>
+  `;
+}
 
-  el.contagem.textContent = `${filtradosTabela.length.toLocaleString("pt-BR")} registro(s)`;
+// Renderiza TODOS os registros do filtro (sem paginação), mas em lotes: o
+// 1º lote entra na hora (aparece instantâneo) e o resto é anexado em
+// `setTimeout` (não `requestAnimationFrame` — este não roda com a aba em
+// segundo plano), pra não travar a thread montando milhares de <tr> de uma
+// vez. `tokenRender` cancela o preenchimento em andamento se o filtro mudar
+// no meio. O CSS (`content-visibility: auto` nas linhas) corta o custo de
+// layout das linhas fora da viewport.
+let tokenRender = 0;
+const LOTE_INICIAL_TABELA = 80;
+const LOTE_TABELA = 800;
+
+function renderizarTabela() {
+  const token = ++tokenRender;
+  const linhas = filtradosTabela;
+
+  el.contagem.textContent = `${linhas.length.toLocaleString("pt-BR")} registro(s)`;
+  el.corpo.innerHTML = linhas.slice(0, LOTE_INICIAL_TABELA).map(linhaTabela).join("");
+
+  if (linhas.length <= LOTE_INICIAL_TABELA) return;
+
+  let i = LOTE_INICIAL_TABELA;
+  const proximoLote = () => {
+    if (token !== tokenRender) return; // filtro mudou — aborta este render
+    el.corpo.insertAdjacentHTML("beforeend", linhas.slice(i, i + LOTE_TABELA).map(linhaTabela).join(""));
+    i += LOTE_TABELA;
+    if (i < linhas.length) setTimeout(proximoLote, 0);
+  };
+  setTimeout(proximoLote, 0);
 }
 
 function carregarStatus() {
@@ -833,6 +859,16 @@ function carregarDados() {
         el.unidadesGrid.innerHTML = `<p class="evolucao-vazio">Nenhum dado exportado ainda — rode o robô (backend/orquestrador.py).</p>`;
         return;
       }
+      // Pré-formata as células caras da tabela UMA vez, no carregamento —
+      // `formatarCompetencia`/`formatarDataCurta2` chamam `toLocaleDateString`
+      // com locale, que custa ~45µs cada; refazer isso pras ~7 mil linhas a
+      // cada render era o "engasgo" de ~0,8s ao entrar numa unidade grande.
+      dados.forEach((r) => {
+        r._cli = nomeComId(r.IdCliente, r.Cliente);
+        r._uni = r.Unidade ? r.Unidade.toUpperCase() : r.Unidade;
+        r._comp = formatarCompetencia(r.Competencia);
+        r._venc = formatarDataCurta2(r.DataVencimento);
+      });
       const tipos = renderizarTipoSpedAbas([...new Set(dados.map((r) => r.TipoSped).filter(Boolean))]);
       selecionarTipoSped(tipos[0] || null);
     })

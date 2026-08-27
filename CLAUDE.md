@@ -96,7 +96,12 @@ Card "Por Regime Tributário" e cada linha do ranking por Gerente são clicávei
 `index.html` + `static/script.js` seguem a estrutura do [[project_relatorio_fechamentos]] (mesmo `static/style.css`): "Por Regime Tributário" (grid único de cards, sem abas nem faixas aninhadas), ranking "Pendências por Gerente de Contas" (top 10, clicável) e "Evolução Mensal" (barra por mês de SPEDs entregues, usando `DataAlteracaoEstagio` de quem tem `Status`="Entregue").
 - **Mensal, não diária (2026-08-20, correção do usuário)**: o robô sempre consulta o ano inteiro (01/01 até hoje), então uma barra por dia chegaria a 150+ barras ilegíveis. `contarEntregasPorMes()`/`formatarMesCurto()` agrupam por `AAAA-MM`.
 - A quebra interna de cada card é **"Status" (Entregue/Pendente) → "Atrasado/No Prazo"** — só 2 níveis (`renderizarStatusGrupo()`).
-- **Tabela numa página só, com scroll interno** (`.tabela-scroll` tem `max-height: 640px` + `overflow-y: auto`; `thead th` é `position: sticky`). A paginação client-side (`TAMANHO_PAGINA`/`paginaAtual`/botões Anterior/Próxima) foi **removida a pedido do usuário (2026-08-27)** — o volume é aceitável agora porque a tabela sempre está recortada por Unidade/Departamento (`dadosEscopo`), não vê mais o Tipo SPED inteiro. Sem coluna "Tipo SPED" (redundante — a página já está filtrada por tipo).
+- **Tabela numa página só, com scroll interno** (`.tabela-scroll` tem `max-height: 640px` + `overflow-y: auto`; `thead th` é `position: sticky`). A paginação client-side (botões Anterior/Próxima) foi **removida a pedido do usuário (2026-08-27)**. Sem coluna "Tipo SPED" (redundante — a página já está filtrada por tipo).
+- **Performance da tabela (2026-08-27, o usuário reclamou de um "engasgo" de ~0,8s ao entrar numa unidade grande)**: 3 medidas, todas necessárias —
+  1. **Pré-formatação no carregamento** (`carregarDados`): `nomeComId`/`formatarCompetencia`/`formatarDataCurta2` rodam UMA vez por linha e ficam em `r._cli`/`_uni`/`_comp`/`_venc`. `toLocaleDateString` com locale custa ~45µs; refazer isso pras ~7 mil linhas × 2 datas a cada render era o grosso do engasgo (~640ms).
+  2. **Render em lotes** (`renderizarTabela`): 1º lote (80 linhas) síncrono, resto anexado via `setTimeout` (NÃO `requestAnimationFrame` — não roda com a aba em segundo plano). `tokenRender` aborta o preenchimento em andamento se o filtro mudar no meio.
+  3. **`content-visibility: auto` + `contain-intrinsic-size` nas `tbody tr`** (CSS): o navegador pula layout/paint das linhas fora da viewport. Ctrl+F e scroll continuam normais.
+  Resultado: clique bloqueia ~25ms (era ~830ms).
 
 ### Cores — regra fixa
 **Nunca verde/âmbar para status.** Só rampa de vermelho MG, igual a todos os outros dashboards MG — ver [[feedback_mg_dashboards_red_only_palette]].

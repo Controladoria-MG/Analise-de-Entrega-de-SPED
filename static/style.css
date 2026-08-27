@@ -807,6 +807,16 @@ tbody td {
   word-break: break-word;
 }
 
+/* A tabela mostra todos os registros do filtro (sem paginação). Pra não
+   travar ~0,8s montando ~7 mil linhas de uma vez, o navegador pula o
+   layout/paint das linhas fora da viewport — o `contain-intrinsic-size` é
+   só a altura estimada de uma linha, corrigida conforme rola. Ctrl+F e
+   scroll continuam funcionando normalmente. */
+tbody tr {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 42px;
+}
+
 tbody tr:hover {
   background: var(--bg-hover-row);
 }
