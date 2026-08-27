@@ -772,7 +772,7 @@ main {
 
 .tabela-scroll {
   overflow-x: hidden;
-  max-height: 900px;
+  max-height: 640px;
   overflow-y: auto;
 }
 
@@ -853,45 +853,13 @@ tbody tr:hover {
   font-weight: 600;
 }
 
+/* Rodapé da tabela — só a contagem de registros (a tabela mostra todos numa
+   página só, com scroll interno em .tabela-scroll). */
 .paginacao {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 8px 16px;
   padding: 12px 20px;
   border-top: 1px solid var(--borda);
   font-size: 0.85rem;
   color: var(--cinza-texto);
-}
-
-.paginacao-controles {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.paginacao-btn {
-  font: inherit;
-  font-size: 0.82rem;
-  font-weight: 600;
-  padding: 6px 14px;
-  border: 1.5px solid var(--borda);
-  border-radius: 6px;
-  background: var(--bg-card);
-  color: var(--cinza-texto);
-  cursor: pointer;
-  transition: border-color 0.15s ease, color 0.15s ease;
-}
-
-.paginacao-btn:hover:not(:disabled) {
-  border-color: var(--mg-vermelho);
-  color: var(--mg-vermelho);
-}
-
-.paginacao-btn:disabled {
-  opacity: 0.45;
-  cursor: default;
 }
 
 code {

@@ -17,13 +17,12 @@ let escopo = { unidade: null, depto: null };
 let filtrados = [];
 let filtradosTabela = [];
 
-// A tabela é paginada (client-side) porque o relatório cobre o ano inteiro
-// (uma linha por cliente por competência) — bem mais volume que os outros
-// portais MG. Sem paginação, redesenhar todas as linhas a cada troca de
-// filtro/aba deixava a página perceptivelmente lenta (usuário reportou
-// 2026-08-20).
-const TAMANHO_PAGINA = 100;
-let paginaAtual = 1;
+// A tabela mostra todos os registros do filtro atual numa página só, com
+// scroll interno (`.tabela-scroll` tem `max-height`). O volume é aceitável
+// porque a tabela sempre está recortada por Unidade/Departamento
+// (`dadosEscopo`) — a paginação client-side que existia antes (quando a
+// tabela via o Tipo SPED inteiro, ~9 mil linhas) foi removida a pedido do
+// usuário (2026-08-27).
 
 const el = {
   status: document.getElementById("status-execucao"),
@@ -49,9 +48,6 @@ const el = {
   limpar: document.getElementById("f-limpar"),
   corpo: document.getElementById("tabela-corpo"),
   contagem: document.getElementById("contagem"),
-  paginaAtualLabel: document.getElementById("pagina-atual"),
-  paginaAnterior: document.getElementById("pagina-anterior"),
-  paginaProxima: document.getElementById("pagina-proxima"),
   quebraConteudo: document.getElementById("quebra-conteudo"),
   rankingGerentes: document.getElementById("ranking-gerentes"),
   evolucaoGrafico: document.getElementById("evolucao-grafico"),
@@ -132,7 +128,6 @@ function aplicarFiltroTabela() {
     busca: el.tBusca, segmento: el.tSegmento, regime: el.tRegime,
     competencia: el.tCompetencia, status: el.tStatus, atraso: el.tAtraso, gerente: el.tGerente,
   });
-  paginaAtual = 1;
   renderizarTabela();
 }
 
@@ -519,12 +514,7 @@ function formatarDataCurta2(iso) {
 }
 
 function renderizarTabela() {
-  const totalPaginas = Math.max(1, Math.ceil(filtradosTabela.length / TAMANHO_PAGINA));
-  if (paginaAtual > totalPaginas) paginaAtual = totalPaginas;
-  const inicio = (paginaAtual - 1) * TAMANHO_PAGINA;
-  const paginaDados = filtradosTabela.slice(inicio, inicio + TAMANHO_PAGINA);
-
-  el.corpo.innerHTML = paginaDados
+  el.corpo.innerHTML = filtradosTabela
     .map((r) => {
       return `
         <tr>
@@ -544,25 +534,7 @@ function renderizarTabela() {
     .join("");
 
   el.contagem.textContent = `${filtradosTabela.length.toLocaleString("pt-BR")} registro(s)`;
-  el.paginaAtualLabel.textContent = `Página ${paginaAtual} de ${totalPaginas}`;
-  el.paginaAnterior.disabled = paginaAtual <= 1;
-  el.paginaProxima.disabled = paginaAtual >= totalPaginas;
 }
-
-el.paginaAnterior.addEventListener("click", () => {
-  if (paginaAtual > 1) {
-    paginaAtual--;
-    renderizarTabela();
-  }
-});
-
-el.paginaProxima.addEventListener("click", () => {
-  const totalPaginas = Math.max(1, Math.ceil(filtradosTabela.length / TAMANHO_PAGINA));
-  if (paginaAtual < totalPaginas) {
-    paginaAtual++;
-    renderizarTabela();
-  }
-});
 
 function carregarStatus() {
   fetch("data/analise_sped/status.json?" + Date.now())

@@ -96,7 +96,7 @@ Card "Por Regime Tributário" e cada linha do ranking por Gerente são clicávei
 `index.html` + `static/script.js` seguem a estrutura do [[project_relatorio_fechamentos]] (mesmo `static/style.css`): "Por Regime Tributário" (grid único de cards, sem abas nem faixas aninhadas), ranking "Pendências por Gerente de Contas" (top 10, clicável) e "Evolução Mensal" (barra por mês de SPEDs entregues, usando `DataAlteracaoEstagio` de quem tem `Status`="Entregue").
 - **Mensal, não diária (2026-08-20, correção do usuário)**: o robô sempre consulta o ano inteiro (01/01 até hoje), então uma barra por dia chegaria a 150+ barras ilegíveis. `contarEntregasPorMes()`/`formatarMesCurto()` agrupam por `AAAA-MM`.
 - A quebra interna de cada card é **"Status" (Entregue/Pendente) → "Atrasado/No Prazo"** — só 2 níveis (`renderizarStatusGrupo()`).
-- **Tabela paginada** (`TAMANHO_PAGINA = 100`) — o relatório cobre o ano inteiro (~9 mil linhas por tipo), volume bem maior que os outros portais MG. Sem coluna "Tipo SPED" (redundante — a página já está filtrada por tipo).
+- **Tabela numa página só, com scroll interno** (`.tabela-scroll` tem `max-height: 640px` + `overflow-y: auto`; `thead th` é `position: sticky`). A paginação client-side (`TAMANHO_PAGINA`/`paginaAtual`/botões Anterior/Próxima) foi **removida a pedido do usuário (2026-08-27)** — o volume é aceitável agora porque a tabela sempre está recortada por Unidade/Departamento (`dadosEscopo`), não vê mais o Tipo SPED inteiro. Sem coluna "Tipo SPED" (redundante — a página já está filtrada por tipo).
 
 ### Cores — regra fixa
 **Nunca verde/âmbar para status.** Só rampa de vermelho MG, igual a todos os outros dashboards MG — ver [[feedback_mg_dashboards_red_only_palette]].
