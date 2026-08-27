@@ -353,14 +353,23 @@ function renderizarCardsNavegacao(container, rows, chave, aoClicar, mensagemVazi
 // ── Cards totalizadores (placares) — topo da tela de Unidade/Departamento,
 // mesma identidade visual do Controle de Fechamentos. Reflete sempre o
 // escopo atual (unidade inteira, ou já recortado por departamento).
+//
+// Só 3 placares: Total / Entregue / Pendente (Entregue + Pendente = Total,
+// vêm das 2 abas do export). NÃO tem placar de "Atrasado" separado — atraso
+// cruza os dois (a maioria dos atrasados já foi entregue, só que fora do
+// prazo), então um card "Atrasado: 4.145" ao lado dos outros dava impressão
+// errada de 4 mil problemas em aberto. O número que interessa é o subconjunto
+// acionável (pendente E já vencido) — mostrado na descrição do card Pendente.
 function renderizarPlacares(rows) {
   let entregue = 0;
   let pendente = 0;
-  let atrasado = 0;
+  let pendenteVencido = 0;
   rows.forEach((r) => {
     if (r.Status === "Entregue") entregue++;
-    else if (r.Status === "Pendente") pendente++;
-    if (r.Atrasado === "Atrasado") atrasado++;
+    else if (r.Status === "Pendente") {
+      pendente++;
+      if (r.Atrasado === "Atrasado") pendenteVencido++;
+    }
   });
   const total = rows.length;
   // Arredondamento "honesto": só mostra 0%/100% quando for exatamente isso —
@@ -373,17 +382,16 @@ function renderizarPlacares(rows) {
     return `${arredondado}% do total`;
   };
   const escopoDesc = escopo.depto ? "do departamento" : "da unidade";
+  const descVencidas = pendenteVencido === 0
+    ? "nenhuma vencida"
+    : `${pendenteVencido.toLocaleString("pt-BR")} já vencida${pendenteVencido === 1 ? "" : "s"}`;
 
   const defs = [
     { classe: "total", valor: total, label: "Total de SPEDs", desc: escopoDesc, clicavel: false },
     { classe: "entregue", valor: entregue, label: "Entregue", desc: pct(entregue), clicavel: false },
     {
-      classe: "pendente", valor: pendente, label: "Pendente", desc: pct(pendente),
+      classe: "pendente", valor: pendente, label: "Pendente", desc: descVencidas,
       clicavel: true, campo: "Status", filtroValor: "Pendente",
-    },
-    {
-      classe: "atrasado", valor: atrasado, label: "Atrasado", desc: pct(atrasado),
-      clicavel: true, campo: "Atrasado", filtroValor: "Atrasado",
     },
   ];
 
