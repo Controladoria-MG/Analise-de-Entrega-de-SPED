@@ -157,23 +157,23 @@ main {
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
 }
 
-/* Filtro de Unidade (destaque no topo da página) */
+/* Abas de Tipo SPED (ICMS / Contribuições) */
 
 .tipo-sped-card {
-  padding: 12px 20px;
+  padding: 8px 20px;
 }
 
 .tipo-sped-abas {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
 .tipo-sped-aba {
   font: inherit;
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   font-weight: 700;
-  padding: 10px 30px;
+  padding: 6px 20px;
   border: 1.5px solid var(--borda);
   border-radius: 999px;
   background: var(--bg-card-alt);
@@ -193,52 +193,198 @@ main {
   color: #fff;
 }
 
-.unidade-topo {
+/* Navegação Unidade -> Departamento (breadcrumb preto + corpo) — mesma
+   identidade visual do Portal de Tarefas / Controle de Fechamentos. */
+
+.unidade-bar {
+  background-color: #1a1a1a;
+  padding: 10px 32px;
   display: flex;
   align-items: center;
-  gap: 14px;
-  flex-wrap: wrap;
-  padding: 14px 20px;
+  border-bottom: 3px solid var(--mg-vermelho);
 }
 
-.unidade-topo-label {
-  font-size: 0.78rem;
+.btn-voltar {
+  display: inline-block;
+  align-self: flex-start;
+  flex-shrink: 0;
+  background: none;
+  border: 2px solid var(--mg-vermelho);
+  color: var(--mg-vermelho);
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 700;
+  padding: 7px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.btn-voltar:hover {
+  background-color: var(--mg-vermelho);
+  color: #fff;
+}
+
+.crumb-link {
+  color: #888888;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.crumb-link:hover {
+  color: #cccccc;
+}
+
+.crumb-sep {
+  color: var(--mg-vermelho);
+  font-weight: 700;
+  font-size: 1.1rem;
+  margin: 0 8px;
+  line-height: 1;
+}
+
+.crumb-atual {
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+/* ── Cards totalizadores (placares) — mesma identidade do Controle de
+   Fechamentos, cores por categoria (preto/verde/vermelho). */
+
+.placares-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 20px;
+}
+
+.placar {
+  background-color: var(--bg-card);
+  border-radius: 6px;
+  padding: 24px 20px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border-bottom: 3px solid;
+}
+
+.placar-clicavel {
+  cursor: pointer;
+  transition: transform 0.12s, box-shadow 0.12s;
+}
+
+.placar-clicavel:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.12);
+}
+
+.placar-label {
+  font-size: 0.85rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: var(--mg-vermelho);
-  flex-shrink: 0;
+  margin-bottom: 10px;
+  color: var(--cinza-muted);
 }
 
-.unidade-topo-lista {
+.placar-valor {
+  font-size: 2.2rem;
+  font-weight: 800;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.placar-desc {
+  font-size: 0.75rem;
+  color: var(--cinza-muted);
+}
+
+.placar.total     { border-color: var(--cinza-escuro); }
+.placar.total     .placar-valor { color: var(--cinza-escuro); }
+.placar.entregue  { border-color: #1E8C3A; }
+.placar.entregue  .placar-valor { color: #1E8C3A; }
+.placar.pendente  { border-color: var(--mg-vermelho); }
+.placar.pendente  .placar-valor { color: var(--mg-vermelho); }
+.placar.atrasado  { border-color: var(--vermelho-profundo); }
+.placar.atrasado  .placar-valor { color: var(--vermelho-profundo); }
+
+#corpo-dashboard {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  flex-direction: column;
+  gap: 16px;
 }
 
-.unidade-topo-chip {
-  font: inherit;
-  font-size: 0.86rem;
-  font-weight: 600;
-  padding: 8px 16px;
-  border: 1.5px solid var(--borda);
-  border-radius: 999px;
-  background: var(--bg-card);
-  color: var(--cinza-texto);
+/* Tela 1 (Painel de Controle) — cards simples, só o nome da unidade,
+   sem números. */
+
+.painel-unidades-titulo {
+  color: var(--mg-vermelho);
+  font-size: 1.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin: 0 0 32px;
+  text-align: center;
+}
+
+.unidades-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  max-width: 980px;
+  margin: 0 auto;
+}
+
+.unidade-card {
+  background-color: var(--bg-card);
+  border-bottom: 2px solid var(--mg-vermelho);
+  border-radius: 6px;
+  padding: 24px 24px 0 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: box-shadow 0.2s;
   cursor: pointer;
-  outline: none;
-  transition: border-color 0.15s, color 0.15s, background 0.15s;
+  overflow: hidden;
 }
 
-.unidade-topo-chip:hover {
-  border-color: var(--mg-vermelho);
+.unidade-card:hover {
+  box-shadow: 0 4px 16px rgba(192, 0, 0, 0.18);
+}
+
+.unidade-card-nome {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--cinza-escuro);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 10px;
+}
+
+.unidade-card-footer {
+  border-top: 1px solid var(--mg-vermelho);
+  padding: 10px 0;
+  font-size: 0.75rem;
+  color: var(--cinza-muted);
+  font-style: italic;
+}
+
+.nav-card .nav-card-footer {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px dashed var(--borda);
+  font-size: 0.7rem;
+  color: var(--cinza-muted);
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.nav-card:hover .nav-card-footer {
   color: var(--mg-vermelho);
 }
 
-.unidade-topo-chip.ativo {
-  background: var(--mg-vermelho);
-  border-color: var(--mg-vermelho);
-  color: #fff;
+.oculto {
+  display: none !important;
 }
 
 /* Filtros */
@@ -342,7 +488,7 @@ main {
   box-shadow: 0 0 0 3px var(--vermelho-suave);
 }
 
-/* Quebras (por Tributação / por Departamento / por Unidade — em abas) */
+/* Quebras (Por Regime Tributário) e cards de navegação (Por Departamento) */
 
 .quebra-titulo {
   margin: 0;
@@ -360,45 +506,12 @@ main {
   margin-bottom: 14px;
 }
 
-.quebra-abas {
-  display: flex;
-  gap: 4px;
-  background: var(--fundo);
-  padding: 4px;
-  border-radius: 8px;
-}
-
-.quebra-aba {
-  font: inherit;
-  font-size: 0.82rem;
-  font-weight: 600;
-  padding: 7px 14px;
-  border: none;
-  border-radius: 156px;
-  background: transparent;
-  color: var(--cinza-texto);
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s;
-}
-
-.quebra-aba:hover { color: var(--mg-vermelho); }
-
-.quebra-aba.ativa {
-  background: var(--bg-card);
-  color: var(--mg-vermelho);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
-}
-
 .quebra-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, 300px);
   column-gap: 10px;
   row-gap: 14px;
   align-items: start;
-}
-
-.quebra-grid.quebra-grid--faixas {
-  grid-template-columns: 1fr;
 }
 
 .quebra-card {
@@ -459,169 +572,6 @@ main {
   display: flex;
   flex-direction: column;
   padding-bottom: 8px;
-}
-
-.quebra-faixa {
-  background-color: var(--bg-card-alt);
-  border-bottom: 5px solid var(--mg-vermelho);
-  border-radius: 6px;
-  padding: 10px 12px 0 12px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 6px 16px rgba(0, 0, 0, 0.12);
-  overflow: hidden;
-}
-
-.quebra-faixa.selecionado {
-
-  border-bottom-width: 7px;
-}
-
-.quebra-faixa-cabecalho {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 8px;
-  padding-bottom: 6px;
-  border-bottom: 1px solid var(--borda);
-  cursor: pointer;
-}
-
-.quebra-faixa-cabecalho:hover .quebra-nome {
-  color: var(--mg-vermelho);
-}
-
-.quebra-faixa-fixar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex: 0 0 auto;
-  width: 30px;
-  height: 30px;
-  padding: 0;
-  border: 1px solid var(--borda);
-  border-radius: 6px;
-  background: var(--bg-card);
-  color: var(--cinza-texto);
-  cursor: pointer;
-  transition: border-color 0.15s, color 0.15s, background 0.15s;
-}
-
-.quebra-faixa-fixar:hover {
-  border-color: var(--mg-vermelho);
-  color: var(--mg-vermelho);
-}
-
-.quebra-faixa-fixar.fixado {
-  background: var(--mg-vermelho);
-  border-color: var(--mg-vermelho);
-  color: #fff;
-}
-
-.quebra-faixa-toggle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex: 0 0 auto;
-  width: 34px;
-  height: 34px;
-  padding: 0;
-  border: none;
-  background: none;
-  cursor: pointer;
-}
-
-.quebra-faixa-toggle .seta {
-  border-left-width: 8px;
-  border-top-width: 6px;
-  border-bottom-width: 6px;
-}
-
-.quebra-faixa-toggle .seta {
-  transform: rotate(90deg);
-}
-
-.quebra-faixa.colapsado .quebra-faixa-toggle .seta {
-  transform: rotate(0deg);
-}
-
-.quebra-faixa.colapsado .quebra-faixa-cabecalho {
-  margin-bottom: 0;
-  border-bottom: none;
-}
-
-.quebra-faixa.colapsado .regime-cards {
-  display: none;
-}
-
-.seta {
-  display: inline-block;
-  width: 0;
-  height: 0;
-  border-left: 5px solid var(--cinza-muted);
-  border-top: 4px solid transparent;
-  border-bottom: 4px solid transparent;
-  transition: transform 0.15s ease;
-  flex-shrink: 0;
-}
-
-.regime-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, 300px);
-  gap: 14px 10px;
-  padding-bottom: 10px;
-}
-
-.regime-card {
-  width: 300px;
-  background: var(--bg-card);
-  border: 1px solid var(--borda);
-  border-bottom: 5px solid var(--mg-vermelho);
-  border-radius: 6px;
-  padding: 12px 12px 0 12px;
-  cursor: pointer;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
-  overflow: hidden;
-}
-
-.regime-card:hover {
-  border-color: var(--mg-vermelho);
-}
-
-.regime-card.selecionado {
-  border-bottom-width: 7px;
-  box-shadow: 0 4px 12px rgba(192, 0, 0, 0.18);
-}
-
-.regime-card-cabecalho {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 6px;
-  padding-bottom: 6px;
-  border-bottom: 1px solid var(--borda);
-}
-
-.regime-card-nome {
-  font-size: 0.96rem;
-  font-weight: 700;
-  color: var(--cinza-escuro);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  min-width: 0;
-  flex: 1 1 auto;
-}
-
-.regime-card-total {
-  font-size: 1.02rem;
-  font-weight: 800;
-  color: var(--mg-vermelho);
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-  flex: 0 0 auto;
 }
 
 .doc-grupo {

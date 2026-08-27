@@ -20,173 +20,171 @@
     </div>
   </header>
 
+  <!-- Breadcrumb de navegação — fora do container, ocupa a largura toda,
+       igual ao Portal de Tarefas / Controle de Fechamentos. -->
+  <div class="unidade-bar oculto" id="navegacao-breadcrumb">
+    <span id="breadcrumb-crumbs"></span>
+  </div>
+
   <main>
     <section class="tipo-sped-card card" aria-label="Tipo de SPED">
       <div class="tipo-sped-abas" id="tipo-sped-abas" role="tablist"></div>
     </section>
 
-    <section class="unidade-topo card" aria-label="Filtro por unidade">
-      <span class="unidade-topo-label">Unidade</span>
-      <div class="unidade-topo-lista" id="unidade-topo-lista"></div>
+    <button type="button" class="btn-voltar oculto" id="btn-voltar-painel">&#8592; Voltar</button>
+
+    <div class="placares-grid oculto" id="placares-grid"></div>
+
+    <section id="secao-unidades" aria-label="Escolha a unidade">
+      <h2 class="painel-unidades-titulo">Painel de Controle</h2>
+      <div class="unidades-grid" id="unidades-grid"></div>
     </section>
 
-    <section class="filtros-card card" aria-label="Filtros">
-      <div class="filtros-header">
-        <span class="filtros-titulo">Filtros</span>
-        <button id="f-limpar" type="button" class="btn-limpar-filtros">Limpar filtros</button>
-      </div>
-      <div class="filtros-grid">
-        <div class="filtro-grupo filtro-grupo-busca">
-          <label class="filtro-label" for="f-busca">Buscar</label>
-          <input type="search" id="f-busca" class="filtro-input" placeholder="Cliente ou grupo...">
-        </div>
-        <div class="filtro-grupo">
-          <label class="filtro-label" for="f-segmento">Segmento</label>
-          <select id="f-segmento" class="filtro-select"><option value="">Todos</option></select>
-        </div>
-        <div class="filtro-grupo">
-          <label class="filtro-label" for="f-regime">Regime Tributário</label>
-          <select id="f-regime" class="filtro-select"><option value="">Todos</option></select>
-        </div>
-        <div class="filtro-grupo">
-          <label class="filtro-label" for="f-competencia">Competência</label>
-          <select id="f-competencia" class="filtro-select"><option value="">Todas</option></select>
-        </div>
-        <div class="filtro-grupo">
-          <label class="filtro-label" for="f-depto">Departamento</label>
-          <select id="f-depto" class="filtro-select"><option value="">Todos</option></select>
-        </div>
-        <div class="filtro-grupo">
-          <label class="filtro-label" for="f-status">Status</label>
-          <select id="f-status" class="filtro-select"><option value="">Todos</option></select>
-        </div>
-        <div class="filtro-grupo">
-          <label class="filtro-label" for="f-atraso">Atraso</label>
-          <select id="f-atraso" class="filtro-select"><option value="">Todos</option></select>
-        </div>
-        <div class="filtro-grupo">
-          <label class="filtro-label" for="f-gerente">Gerente de Contas</label>
-          <select id="f-gerente" class="filtro-select"><option value="">Todos</option></select>
-        </div>
-      </div>
+    <section class="card oculto" id="secao-departamentos" aria-label="Departamentos da unidade">
+      <h2 class="quebra-titulo" id="departamentos-grid-titulo">Por Departamento</h2>
+      <div class="quebra-grid" id="departamentos-grid"></div>
     </section>
 
-    <section class="card quebras-card" aria-label="Quebras por dimensão">
-      <div class="quebra-cabecalho-secao">
-        <div class="quebra-abas" id="quebra-abas-dimensao" role="tablist">
-          <button type="button" class="quebra-aba ativa" data-aba="regime" role="tab" aria-selected="true">Por Regime Tributário</button>
-          <button type="button" class="quebra-aba" data-aba="depto" role="tab" aria-selected="false">Por Departamento</button>
+    <div id="corpo-dashboard" class="oculto">
+      <section class="filtros-card card" aria-label="Filtros">
+        <div class="filtros-header">
+          <span class="filtros-titulo">Filtros</span>
+          <button id="f-limpar" type="button" class="btn-limpar-filtros">Limpar filtros</button>
         </div>
-      </div>
-      <div class="quebra-grid" id="quebra-conteudo"></div>
-    </section>
+        <div class="filtros-grid">
+          <div class="filtro-grupo filtro-grupo-busca">
+            <label class="filtro-label" for="f-busca">Buscar</label>
+            <input type="search" id="f-busca" class="filtro-input" placeholder="Cliente ou grupo...">
+          </div>
+          <div class="filtro-grupo">
+            <label class="filtro-label" for="f-segmento">Segmento</label>
+            <select id="f-segmento" class="filtro-select"><option value="">Todos</option></select>
+          </div>
+          <div class="filtro-grupo">
+            <label class="filtro-label" for="f-regime">Regime Tributário</label>
+            <select id="f-regime" class="filtro-select"><option value="">Todos</option></select>
+          </div>
+          <div class="filtro-grupo">
+            <label class="filtro-label" for="f-competencia">Competência</label>
+            <select id="f-competencia" class="filtro-select"><option value="">Todas</option></select>
+          </div>
+          <div class="filtro-grupo">
+            <label class="filtro-label" for="f-status">Status</label>
+            <select id="f-status" class="filtro-select"><option value="">Todos</option></select>
+          </div>
+          <div class="filtro-grupo">
+            <label class="filtro-label" for="f-atraso">Atraso</label>
+            <select id="f-atraso" class="filtro-select"><option value="">Todos</option></select>
+          </div>
+          <div class="filtro-grupo">
+            <label class="filtro-label" for="f-gerente">Gerente de Contas</label>
+            <select id="f-gerente" class="filtro-select"><option value="">Todos</option></select>
+          </div>
+        </div>
+      </section>
 
-    <section class="card evolucao-card" aria-label="Evolução Mensal">
-      <div class="quebra-cabecalho-secao">
-        <div>
-          <h2 class="quebra-titulo">Evolução Mensal</h2>
-          <p class="evolucao-subtitulo">SPEDs entregues por mês</p>
+      <section class="card quebras-card" aria-label="Por Regime Tributário">
+        <div class="quebra-cabecalho-secao">
+          <h2 class="quebra-titulo">Por Regime Tributário</h2>
         </div>
-      </div>
-      <div class="evolucao-grafico" id="evolucao-grafico"></div>
-    </section>
+        <div class="quebra-grid" id="quebra-conteudo"></div>
+      </section>
 
-    <section class="card ranking-card" aria-label="Ranking de pendências por Gerente de Contas">
-      <h2 class="quebra-titulo">Pendências por Gerente de Contas</h2>
-      <div class="ranking-lista" id="ranking-gerentes"></div>
-    </section>
+      <section class="card evolucao-card" aria-label="Evolução Mensal">
+        <div class="quebra-cabecalho-secao">
+          <div>
+            <h2 class="quebra-titulo">Evolução Mensal</h2>
+            <p class="evolucao-subtitulo">SPEDs entregues por mês</p>
+          </div>
+        </div>
+        <div class="evolucao-grafico" id="evolucao-grafico"></div>
+      </section>
 
-    <section class="filtros-card card" aria-label="Filtros da tabela">
-      <div class="filtros-header">
-        <span class="filtros-titulo">Filtros da tabela</span>
-        <button id="t-limpar" type="button" class="btn-limpar-filtros">Limpar filtros da tabela</button>
-      </div>
-      <div class="filtros-grid">
-        <div class="filtro-grupo filtro-grupo-busca">
-          <label class="filtro-label" for="t-busca">Buscar</label>
-          <input type="search" id="t-busca" class="filtro-input" placeholder="Cliente ou grupo...">
-        </div>
-        <div class="filtro-grupo">
-          <label class="filtro-label" for="t-unidade">Unidade</label>
-          <select id="t-unidade" class="filtro-select"><option value="">Todas</option></select>
-        </div>
-        <div class="filtro-grupo">
-          <label class="filtro-label" for="t-segmento">Segmento</label>
-          <select id="t-segmento" class="filtro-select"><option value="">Todos</option></select>
-        </div>
-        <div class="filtro-grupo">
-          <label class="filtro-label" for="t-regime">Regime Tributário</label>
-          <select id="t-regime" class="filtro-select"><option value="">Todos</option></select>
-        </div>
-        <div class="filtro-grupo">
-          <label class="filtro-label" for="t-competencia">Competência</label>
-          <select id="t-competencia" class="filtro-select"><option value="">Todas</option></select>
-        </div>
-        <div class="filtro-grupo">
-          <label class="filtro-label" for="t-depto">Departamento</label>
-          <select id="t-depto" class="filtro-select"><option value="">Todos</option></select>
-        </div>
-        <div class="filtro-grupo">
-          <label class="filtro-label" for="t-status">Status</label>
-          <select id="t-status" class="filtro-select"><option value="">Todos</option></select>
-        </div>
-        <div class="filtro-grupo">
-          <label class="filtro-label" for="t-atraso">Atraso</label>
-          <select id="t-atraso" class="filtro-select"><option value="">Todos</option></select>
-        </div>
-        <div class="filtro-grupo">
-          <label class="filtro-label" for="t-gerente">Gerente de Contas</label>
-          <select id="t-gerente" class="filtro-select"><option value="">Todos</option></select>
-        </div>
-      </div>
-    </section>
+      <section class="card ranking-card" aria-label="Ranking de pendências por Gerente de Contas">
+        <h2 class="quebra-titulo">Pendências por Gerente de Contas</h2>
+        <div class="ranking-lista" id="ranking-gerentes"></div>
+      </section>
 
-    <section class="card tabela-card">
-      <div class="tabela-scroll">
-        <table id="tabela">
-          <colgroup>
-            <col style="width: 17%">
-            <col style="width: 10%">
-            <col style="width: 7%">
-            <col style="width: 8%">
-            <col style="width: 10%">
-            <col style="width: 9%">
-            <col style="width: 9%">
-            <col style="width: 8%">
-            <col style="width: 8%">
-            <col style="width: 8%">
-          </colgroup>
-          <thead>
-            <tr>
-              <th>Cliente</th>
-              <th>Grupo</th>
-              <th>Unidade</th>
-              <th>Segmento</th>
-              <th>Gerente de Contas</th>
-              <th>Departamento</th>
-              <th>Regime</th>
-              <th>Competência</th>
-              <th>Vencimento</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody id="tabela-corpo"></tbody>
-        </table>
-      </div>
-      <div class="paginacao">
-        <span id="contagem"></span>
-        <div class="paginacao-controles">
-          <button id="pagina-anterior" type="button" class="paginacao-btn">‹ Anterior</button>
-          <span id="pagina-atual"></span>
-          <button id="pagina-proxima" type="button" class="paginacao-btn">Próxima ›</button>
+      <section class="filtros-card card" id="tabela-secao" aria-label="Filtros da tabela">
+        <div class="filtros-header">
+          <span class="filtros-titulo">Filtros da tabela</span>
+          <button id="t-limpar" type="button" class="btn-limpar-filtros">Limpar filtros da tabela</button>
         </div>
-      </div>
-    </section>
+        <div class="filtros-grid">
+          <div class="filtro-grupo filtro-grupo-busca">
+            <label class="filtro-label" for="t-busca">Buscar</label>
+            <input type="search" id="t-busca" class="filtro-input" placeholder="Cliente ou grupo...">
+          </div>
+          <div class="filtro-grupo">
+            <label class="filtro-label" for="t-segmento">Segmento</label>
+            <select id="t-segmento" class="filtro-select"><option value="">Todos</option></select>
+          </div>
+          <div class="filtro-grupo">
+            <label class="filtro-label" for="t-regime">Regime Tributário</label>
+            <select id="t-regime" class="filtro-select"><option value="">Todos</option></select>
+          </div>
+          <div class="filtro-grupo">
+            <label class="filtro-label" for="t-competencia">Competência</label>
+            <select id="t-competencia" class="filtro-select"><option value="">Todas</option></select>
+          </div>
+          <div class="filtro-grupo">
+            <label class="filtro-label" for="t-status">Status</label>
+            <select id="t-status" class="filtro-select"><option value="">Todos</option></select>
+          </div>
+          <div class="filtro-grupo">
+            <label class="filtro-label" for="t-atraso">Atraso</label>
+            <select id="t-atraso" class="filtro-select"><option value="">Todos</option></select>
+          </div>
+          <div class="filtro-grupo">
+            <label class="filtro-label" for="t-gerente">Gerente de Contas</label>
+            <select id="t-gerente" class="filtro-select"><option value="">Todos</option></select>
+          </div>
+        </div>
+      </section>
+
+      <section class="card tabela-card">
+        <div class="tabela-scroll">
+          <table id="tabela">
+            <colgroup>
+              <col style="width: 17%">
+              <col style="width: 10%">
+              <col style="width: 7%">
+              <col style="width: 8%">
+              <col style="width: 10%">
+              <col style="width: 9%">
+              <col style="width: 9%">
+              <col style="width: 8%">
+              <col style="width: 8%">
+              <col style="width: 8%">
+            </colgroup>
+            <thead>
+              <tr>
+                <th>Cliente</th>
+                <th>Grupo</th>
+                <th>Unidade</th>
+                <th>Segmento</th>
+                <th>Gerente de Contas</th>
+                <th>Departamento</th>
+                <th>Regime</th>
+                <th>Competência</th>
+                <th>Vencimento</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="tabela-corpo"></tbody>
+          </table>
+        </div>
+        <div class="paginacao">
+          <span id="contagem"></span>
+          <div class="paginacao-controles">
+            <button id="pagina-anterior" type="button" class="paginacao-btn">‹ Anterior</button>
+            <span id="pagina-atual"></span>
+            <button id="pagina-proxima" type="button" class="paginacao-btn">Próxima ›</button>
+          </div>
+        </div>
+      </section>
+    </div>
   </main>
-
-  <footer>
-    <span id="status-execucao-rodape">Carregando...</span>
-  </footer>
 
   <script src="static/script.js"></script>
 </body>
