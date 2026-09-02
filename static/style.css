@@ -165,7 +165,7 @@ main {
 
 .tipo-sped-abas {
   display: flex;
-  gap: 8px;
+  gap: 10px;
   flex-wrap: wrap;
 }
 
@@ -173,7 +173,7 @@ main {
   font: inherit;
   font-size: 0.85rem;
   font-weight: 700;
-  padding: 6px 20px;
+  padding: 7px 22px;
   border: 1.5px solid var(--borda);
   border-radius: 999px;
   background: var(--bg-card-alt);
@@ -330,9 +330,9 @@ main {
 
 .unidades-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 24px;
-  max-width: 980px;
+  max-width: 660px;
   margin: 0 auto;
 }
 
@@ -568,6 +568,11 @@ main {
   flex: 0 0 auto;
 }
 
+/* ── Corpo do card de quebra: 2 blocos Entregue/Pendente ────────────────
+   Mesma aparência do Controle de Fechamentos (2026-08-28): faixa vermelha
+   com rótulo + total + %, e a sub-lista abaixo. Bloco Entregue = No Prazo/
+   Atrasado; bloco Pendente = os Estagios granulares (clicáveis -> modal).
+   Ver renderizarStatusGrupo em script.js. */
 .quebra-docs {
   display: flex;
   flex-direction: column;
@@ -662,6 +667,20 @@ main {
   gap: 8px;
 }
 
+/* Linhas de estágio (bloco Pendente) abrem o modal — cursor + realce no
+   hover. O nome do estágio aparece INTEIRO (quebra em várias linhas se
+   precisar, não corta), já que é a informação principal do bloco. */
+.status-linha-estagio {
+  cursor: pointer;
+  align-items: flex-start;
+}
+
+.status-linha-estagio:hover .status-nome,
+.status-linha-estagio:hover .status-valores b,
+.status-linha-estagio:hover .status-pct {
+  color: var(--mg-vermelho);
+}
+
 .status-nome {
   font-size: 0.82rem;
   color: var(--cinza-escuro);
@@ -670,6 +689,21 @@ main {
   text-overflow: ellipsis;
   min-width: 0;
   flex: 1 1 auto;
+}
+
+.status-linha-estagio .status-nome {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  line-height: 1.3;
+  text-decoration: underline;
+  text-decoration-color: var(--borda);
+  text-underline-offset: 2px;
+}
+
+.status-nome-vazio {
+  color: var(--cinza-muted);
+  font-style: italic;
 }
 
 .status-valores {
@@ -783,6 +817,10 @@ table {
   font-size: 0.88rem;
 }
 
+/* Colunas de largura proporcional (ver <colgroup> no index.html) — a tabela
+   sempre cabe na largura disponível (sem scroll horizontal). O conteúdo de
+   cada célula quebra em até 2 linhas (`.cel` com `-webkit-line-clamp: 2`);
+   o que passar disso é cortado, e o `title` mostra o valor inteiro no hover. */
 thead th {
   position: sticky;
   top: 0;
@@ -802,9 +840,18 @@ thead th {
 tbody td {
   padding: 9px 12px;
   border-bottom: 1px solid var(--borda);
-  white-space: normal;
+  vertical-align: top;
+}
+
+/* Limita o conteúdo da célula a 2 linhas ("2 parágrafos", pedido do usuário).
+   O que passar disso ganha "…"; o `title` no <td> tem o valor inteiro. */
+.cel {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
   overflow-wrap: break-word;
-  word-break: break-word;
+  line-height: 1.35;
 }
 
 /* A tabela mostra todos os registros do filtro (sem paginação). Pra não
@@ -814,7 +861,7 @@ tbody td {
    scroll continuam funcionando normalmente. */
 tbody tr {
   content-visibility: auto;
-  contain-intrinsic-size: auto 42px;
+  contain-intrinsic-size: auto 58px;
 }
 
 tbody tr:hover {
@@ -887,4 +934,136 @@ code {
   font-weight: 700;
   background: var(--tag-atraso-bg);
   color: var(--tag-atraso-texto);
+}
+
+/* ── Modal de estágio (obrigações pendentes de um motivo) ─────────────── */
+body.modal-aberto {
+  overflow: hidden;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.modal-caixa {
+  display: flex;
+  flex-direction: column;
+  width: min(1360px, 100%);
+  max-height: 92vh;
+  background: var(--bg-card);
+  border-radius: 8px;
+  border-top: 5px solid var(--mg-vermelho);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+}
+
+.modal-cabecalho {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 15px 20px;
+  border-bottom: 1px solid var(--borda);
+}
+
+.modal-cabecalho-info {
+  min-width: 0;
+}
+
+.modal-titulo {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--cinza-escuro);
+}
+
+.modal-sub {
+  margin: 3px 0 0;
+  font-size: 0.8rem;
+  color: var(--cinza-muted);
+}
+
+.modal-fechar {
+  flex: 0 0 auto;
+  border: none;
+  background: transparent;
+  font-size: 1.6rem;
+  line-height: 1;
+  color: var(--cinza-muted);
+  cursor: pointer;
+  padding: 0 4px;
+}
+.modal-fechar:hover {
+  color: var(--mg-vermelho);
+}
+
+.modal-filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--borda);
+  background: var(--bg-card-alt);
+}
+
+.modal-filtros .filtro-input {
+  flex: 2 1 200px;
+}
+
+.modal-filtros .filtro-select {
+  flex: 1 1 150px;
+}
+
+.modal-corpo {
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.modal-tabela {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.83rem;
+}
+
+.modal-tabela th {
+  position: sticky;
+  top: 0;
+  background: var(--bg-card-alt);
+  text-align: left;
+  padding: 9px 12px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--cinza-texto);
+  border-bottom: 1px solid var(--borda);
+  white-space: normal;
+  overflow-wrap: break-word;
+}
+
+.modal-tabela td {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--borda);
+  color: var(--cinza-escuro);
+  vertical-align: top;
+}
+
+.modal-tabela tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.modal-tabela tbody tr:hover {
+  background: var(--bg-hover-row);
+}
+
+.modal-vazio {
+  padding: 24px;
+  text-align: center;
+  color: var(--cinza-muted);
 }

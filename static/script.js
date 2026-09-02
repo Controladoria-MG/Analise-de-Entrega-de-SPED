@@ -60,6 +60,14 @@ const el = {
   tAtraso: document.getElementById("t-atraso"),
   tGerente: document.getElementById("t-gerente"),
   tLimpar: document.getElementById("t-limpar"),
+  modalEstagio: document.getElementById("modal-estagio"),
+  modalEstagioTitulo: document.getElementById("modal-estagio-titulo"),
+  modalEstagioSub: document.getElementById("modal-estagio-sub"),
+  modalEstagioCorpo: document.getElementById("modal-estagio-corpo"),
+  modalEstagioFechar: document.getElementById("modal-estagio-fechar"),
+  modalBusca: document.getElementById("modal-estagio-busca"),
+  modalCompetencia: document.getElementById("modal-estagio-competencia"),
+  modalGerente: document.getElementById("modal-estagio-gerente"),
 };
 
 function popularSelect(select, valores, formatar = (v) => v) {
@@ -132,15 +140,18 @@ function aplicarFiltroTabela() {
 }
 
 const ORDEM_STATUS = ["Entregue", "Pendente"];
-// Ordem fixa dentro de cada card — junto com ORDEM_STATUS acima, garante que
-// todo card renderize o mesmo número de linhas (mesmo tamanho), com contagem
-// 0 pro que não ocorre naquele grupo.
+// Chaves fixas do contador de atraso — sempre presentes (contagem 0 quando
+// não ocorrem no grupo) pra renderizarCorpoQuebra não precisar checar null.
 const ORDEM_ATRASO = ["No Prazo", "Atrasado"];
 
 function criarContadorAtraso() {
   const atraso = new Map();
   ORDEM_ATRASO.forEach((a) => atraso.set(a, 0));
-  return { total: 0, atraso };
+  // `estagios`: contagem por Estágio granular do MG Controle (ex. "19 -
+  // Arquivo não recebido"). Só as pendências alimentam o bloco "Por que
+  // está pendente" em renderizarCorpoQuebra. Conjunto de estágios não é
+  // fixo, então Map sem ordem prévia.
+  return { total: 0, atraso, estagios: new Map() };
 }
 
 function criarContadorStatus() {
@@ -165,12 +176,11 @@ function contarDetalhado(rows, chave) {
 
     const atraso = r.Atrasado || "No Prazo";
     s.atraso.set(atraso, (s.atraso.get(atraso) || 0) + 1);
+
+    const estagio = r.Estagio || "—";
+    s.estagios.set(estagio, (s.estagios.get(estagio) || 0) + 1);
   });
   return [...grupos.entries()].sort((a, b) => b[1].total - a[1].total);
-}
-
-function formatarPct(n) {
-  return `${n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`;
 }
 
 // ── Cards totalizadores clicáveis ("tabela dinâmica") ───────────────────
@@ -235,35 +245,148 @@ function filtrarPorVariosEMostrarTabela(pares) {
   el.tabelaSecao.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-// Detalhamento de Status (Entregue/Pendente) dentro de um card — cada linha
-// abre o Atraso (No Prazo/Atrasado). Sem handler de clique próprio: o clique
-// é sempre do card inteiro (ver quem chama).
+function formatarPct(n) {
+  return `${n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`;
+}
+
+// Um bloco de Status (Entregue / Pendente) dentro de um card de quebra —
+// mesma aparência do Controle de Fechamentos ([[project_relatorio_fechamentos]],
+// `renderizarDocGrupo`): faixa vermelha com rótulo + total + % do grupo, e
+// abaixo a sub-lista = os Estagios granulares do MG Controle (em qual estágio
+// cada SPED está), maior primeiro. Vale pros DOIS blocos (pedido do usuário
+// 2026-08-28: mostrar no Entregue "em qual estágio foi entregue", igual ao
+// Pendente). Cada linha é clicável e abre o modal com aqueles registros
+// (ver ligarCliquesMotivo) — `data-status` diz de qual bloco a linha é.
 function renderizarStatusGrupo(statusNome, s, totalCategoria) {
   const classe = statusNome === "Entregue" ? "recebida" : "pendente";
-  const pctStatus = totalCategoria ? (s.total / totalCategoria) * 100 : 0;
-  const atrasoOrdenado = ORDEM_ATRASO.map((a) => [a, s.atraso.get(a) || 0]);
+  const pctGrupo = totalCategoria ? (s.total / totalCategoria) * 100 : 0;
+  const pctDe = (n) => (totalCategoria ? (n / totalCategoria) * 100 : 0);
 
-  const linhasAtraso = atrasoOrdenado
-    .map(([atraso, count]) => {
-      const pctAtraso = totalCategoria ? (count / totalCategoria) * 100 : 0;
-      return `
-        <div class="status-linha">
-          <span class="status-nome" title="${atraso}">${atraso}</span>
-          <span class="status-valores"><b>${count.toLocaleString("pt-BR")}</b><span class="status-pct">${formatarPct(pctAtraso)}</span></span>
-        </div>
-      `;
-    })
-    .join("");
+  const estagios = [...(s.estagios || new Map()).entries()]
+    .filter(([, count]) => count > 0)
+    .sort((a, b) => b[1] - a[1]);
+  const linhas = estagios.length
+    ? estagios
+        .map(([nome, count]) => `
+          <div class="status-linha status-linha-estagio" data-status="${statusNome}" data-estagio="${nome.replace(/"/g, "&quot;")}" title="${nome} — clique para ver os registros">
+            <span class="status-nome">${nome}</span>
+            <span class="status-valores"><b>${count.toLocaleString("pt-BR")}</b><span class="status-pct">${formatarPct(pctDe(count))}</span></span>
+          </div>
+        `)
+        .join("")
+    : `<div class="status-linha"><span class="status-nome status-nome-vazio">Nenhum</span></div>`;
 
   return `
     <div class="doc-grupo ${classe}">
       <div class="doc-cabecalho">
         <span class="doc-rotulo"><i class="ponto ${classe}"></i>${statusNome}</span>
-        <span class="doc-valores"><b>${s.total.toLocaleString("pt-BR")}</b><span class="doc-pct">${formatarPct(pctStatus)}</span></span>
+        <span class="doc-valores"><b>${s.total.toLocaleString("pt-BR")}</b><span class="doc-pct">${formatarPct(pctGrupo)}</span></span>
       </div>
-      <div class="status-lista">${linhasAtraso}</div>
+      <div class="status-lista">${linhas}</div>
     </div>
   `;
+}
+
+// Corpo de um card de quebra (Por Departamento / Por Regime Tributário) —
+// `g` é uma entrada de contarDetalhado ({ total, status: Map }). Dois blocos
+// (Entregue / Pendente), igual ao Controle de Fechamentos.
+function renderizarCorpoQuebra(g) {
+  return ORDEM_STATUS
+    .map((statusNome) => renderizarStatusGrupo(statusNome, g.status.get(statusNome) || criarContadorAtraso(), g.total))
+    .join("");
+}
+
+// ── Modal: SPEDs de um estágio ───────────────────────────────────────
+// Aberto ao clicar numa linha de estágio (bloco Entregue OU Pendente) num
+// card de quebra. Mostra a tabela dos registros daquele grupo
+// (Departamento ou Regime) + Status + estágio, com filtro próprio (busca +
+// Competência + Gerente) — independente dos filtros da página.
+let modalRegistros = [];
+let modalEstagioLabel = "";
+let modalGrupoLabel = "";
+let modalSubstantivo = "registro(s)";
+
+function abrirModalEstagio(registros, estagio, grupoLabel, statusNome) {
+  modalRegistros = registros;
+  modalEstagioLabel = estagio;
+  modalGrupoLabel = grupoLabel;
+  modalSubstantivo =
+    statusNome === "Pendente" ? "pendência(s)" : statusNome === "Entregue" ? "entrega(s)" : "registro(s)";
+
+  el.modalEstagioTitulo.textContent = estagio;
+
+  const competencias = new Set(
+    registros.map((r) => r.Competencia && r.Competencia.slice(0, 7)).filter(Boolean)
+  );
+  repopularSelect(el.modalCompetencia, competencias, formatarCompetenciaMes);
+  repopularSelect(el.modalGerente, new Set(registros.map((r) => r.GerenteDeContas).filter(Boolean)));
+  el.modalBusca.value = "";
+  el.modalCompetencia.value = "";
+  el.modalGerente.value = "";
+
+  renderizarModalTabela();
+
+  el.modalEstagio.classList.remove("oculto");
+  document.body.classList.add("modal-aberto");
+  el.modalBusca.focus();
+}
+
+function renderizarModalTabela() {
+  const busca = el.modalBusca.value.trim().toLowerCase();
+  const competencia = el.modalCompetencia.value;
+  const gerente = el.modalGerente.value;
+
+  const filtrados = modalRegistros.filter((r) => {
+    if (competencia && (!r.Competencia || !r.Competencia.startsWith(competencia))) return false;
+    if (gerente && r.GerenteDeContas !== gerente) return false;
+    if (busca && !`${r.Cliente || ""} ${r.Grupo || ""}`.toLowerCase().includes(busca)) return false;
+    return true;
+  });
+
+  const temFiltro = busca || competencia || gerente;
+  const contagem = temFiltro
+    ? `${filtrados.length.toLocaleString("pt-BR")} de ${modalRegistros.length.toLocaleString("pt-BR")} ${modalSubstantivo}`
+    : `${modalRegistros.length.toLocaleString("pt-BR")} ${modalSubstantivo}`;
+  const partes = [modalGrupoLabel, contagem];
+  if (tipoSpedAtivo) partes.push(`SPED ${tipoSpedAtivo}`);
+  el.modalEstagioSub.textContent = partes.join(" · ");
+
+  if (!filtrados.length) {
+    el.modalEstagioCorpo.innerHTML = `<tr><td colspan="10" class="modal-vazio">Nenhum registro.</td></tr>`;
+    return;
+  }
+  const ordenados = [...filtrados].sort((a, b) =>
+    String(a.DataVencimento || "").localeCompare(String(b.DataVencimento || ""))
+  );
+  // Mesmas colunas da tabela principal — reaproveita linhaTabela().
+  el.modalEstagioCorpo.innerHTML = ordenados.map(linhaTabela).join("");
+}
+
+function fecharModalEstagio() {
+  el.modalEstagio.classList.add("oculto");
+  document.body.classList.remove("modal-aberto");
+}
+
+// Liga o clique das linhas de estágio (sub-lista dos blocos Entregue/Pendente)
+// de cada card do container: abre o modal com os SPEDs daquele Status+estágio.
+// `rows` é a base do grid (dadosTipo recortado por unidade, ou `filtrados`);
+// `chave` é o campo que define o grupo do card (Departamento / RegimeTributario).
+// stopPropagation pra não disparar também o clique do card (navegar/filtrar).
+function ligarCliquesMotivo(container, rows, chave) {
+  container.querySelectorAll(".quebra-card").forEach((cardEl) => {
+    const grupo = cardEl.dataset.valor;
+    cardEl.querySelectorAll(".status-linha-estagio").forEach((linhaEl) => {
+      linhaEl.addEventListener("click", (evento) => {
+        evento.stopPropagation();
+        const estagio = linhaEl.dataset.estagio;
+        const status = linhaEl.dataset.status;
+        const registros = rows.filter(
+          (r) => r[chave] === grupo && r.Status === status && (r.Estagio || "—") === estagio
+        );
+        abrirModalEstagio(registros, estagio, grupo, status);
+      });
+    });
+  });
 }
 
 // ── Navegação: cards de Unidade e de Departamento ──────────────────────
@@ -314,8 +437,8 @@ function renderizarCardsUnidades(container, rows, aoClicar) {
 }
 
 // Tela 2 (grid "Por Departamento") — reaproveita a aparência do quebra-card
-// (com o detalhamento de Status pronto em renderizarStatusGrupo), só que o
-// clique no card inteiro navega pra tela do Departamento em vez de filtrar.
+// (corpo montado por renderizarCorpoQuebra), só que o clique no card inteiro
+// navega pra tela do Departamento em vez de filtrar.
 function renderizarCardsNavegacao(container, rows, chave, aoClicar, mensagemVazio, formatarNome = (v) => v) {
   const grupos = contarDetalhado(rows, chave);
   if (!grupos.length) {
@@ -323,26 +446,22 @@ function renderizarCardsNavegacao(container, rows, chave, aoClicar, mensagemVazi
     return;
   }
   container.innerHTML = grupos
-    .map(([nome, g]) => {
-      const statusHtml = ORDEM_STATUS
-        .map((statusNome) => renderizarStatusGrupo(statusNome, g.status.get(statusNome), g.total))
-        .join("");
-      return `
+    .map(([nome, g]) => `
         <div class="quebra-card nav-card" data-valor="${nome.replace(/"/g, "&quot;")}" title="${nome}">
           <div class="quebra-cabecalho">
             <div class="quebra-nome">${formatarNome(nome)}</div>
             <div class="quebra-total-num">${g.total.toLocaleString("pt-BR")}</div>
           </div>
-          <div class="quebra-docs">${statusHtml}</div>
+          <div class="quebra-docs">${renderizarCorpoQuebra(g)}</div>
           <div class="nav-card-footer">Clique para ver os detalhes</div>
         </div>
-      `;
-    })
+      `)
     .join("");
 
   container.querySelectorAll(".nav-card").forEach((cardEl) => {
     cardEl.addEventListener("click", () => aoClicar(cardEl.dataset.valor));
   });
+  ligarCliquesMotivo(container, rows, chave);
 }
 
 // ── Cards totalizadores (placares) — topo da tela de Unidade/Departamento,
@@ -411,17 +530,13 @@ function renderizarQuebraGrupo(container, campo, filtroEl) {
   container.innerHTML = grupos
     .map(([nome, g]) => {
       const ativo = nome === selecionado ? " selecionado" : "";
-      const statusHtml = ORDEM_STATUS
-        .map((statusNome) => renderizarStatusGrupo(statusNome, g.status.get(statusNome), g.total))
-        .join("");
-
       return `
         <div class="quebra-card${ativo}" data-campo="${campo}" data-valor="${nome.replace(/"/g, "&quot;")}" title="${nome}">
           <div class="quebra-cabecalho">
             <div class="quebra-nome">${nome}</div>
             <div class="quebra-total-num">${g.total.toLocaleString("pt-BR")}</div>
           </div>
-          <div class="quebra-docs">${statusHtml}</div>
+          <div class="quebra-docs">${renderizarCorpoQuebra(g)}</div>
         </div>
       `;
     })
@@ -430,6 +545,7 @@ function renderizarQuebraGrupo(container, campo, filtroEl) {
   container.querySelectorAll(".quebra-card").forEach((cardEl) => {
     cardEl.addEventListener("click", () => alternarFiltroEMostrarTabela(cardEl.dataset.campo, cardEl.dataset.valor));
   });
+  ligarCliquesMotivo(container, filtrados, campo);
 }
 
 function renderizarQuebras() {
@@ -513,22 +629,30 @@ function formatarDataCurta2(iso) {
   return new Date(`${iso.slice(0, 10)}T00:00:00`).toLocaleDateString("pt-BR");
 }
 
-// Usa as células pré-formatadas em carregarDados (`_cli`/`_uni`/`_comp`/
-// `_venc`) — o resto é `celula()`, que é só string.
+// Usa as células pré-formatadas em carregarDados (`_cli`/`_comp`/`_venc`) —
+// o resto é `celula()`, que é só string. O conteúdo vai num `<span class="cel">`
+// que limita a 2 linhas (`-webkit-line-clamp`, ver CSS) — a coluna tem largura
+// fixa (<colgroup> em %), então o texto quebra em até 2 linhas e o que passar
+// disso é cortado; o `title` mostra o valor inteiro no hover.
+function tdCel(valor) {
+  const v = celula(valor);
+  const t = String(v).replace(/"/g, "&quot;");
+  return `<td title="${t}"><span class="cel">${v}</span></td>`;
+}
+
 function linhaTabela(r) {
   return `
     <tr>
-      <td>${r._cli}</td>
-      <td>${celula(r.Grupo)}</td>
-      <td>${celula(r._uni)}</td>
-      <td>${celula(r.Segmento)}</td>
-      <td>${celula(r.GerenteDeContas)}</td>
-      <td>${celula(r.Departamento)}</td>
-      <td>${celula(r.RegimeTributario)}</td>
-      <td>${r._comp}</td>
-      <td>${r._venc}</td>
-      <td>${celula(r.Status)}</td>
-      <td>${celula(r.Estagio)}</td>
+      ${tdCel(r._cli)}
+      ${tdCel(r.Grupo)}
+      ${tdCel(r.Segmento)}
+      ${tdCel(r.GerenteDeContas)}
+      ${tdCel(r.Departamento)}
+      ${tdCel(r.RegimeTributario)}
+      ${tdCel(r._comp)}
+      ${tdCel(r._venc)}
+      ${tdCel(r.Status)}
+      ${tdCel(r.Estagio)}
     </tr>
   `;
 }
@@ -866,7 +990,6 @@ function carregarDados() {
       // cada render era o "engasgo" de ~0,8s ao entrar numa unidade grande.
       dados.forEach((r) => {
         r._cli = nomeComId(r.IdCliente, r.Cliente);
-        r._uni = r.Unidade ? r.Unidade.toUpperCase() : r.Unidade;
         r._comp = formatarCompetencia(r.Competencia);
         r._venc = formatarDataCurta2(r.DataVencimento);
       });
@@ -905,6 +1028,19 @@ elBtnTema.addEventListener("click", () => {
 });
 
 el.btnVoltarPainel.addEventListener("click", voltarUmaSecao);
+
+// Modal de estágio: fecha no X, no clique fora da caixa e no Esc.
+el.modalEstagioFechar.addEventListener("click", fecharModalEstagio);
+el.modalEstagio.addEventListener("click", (evento) => {
+  if (evento.target === el.modalEstagio) fecharModalEstagio();
+});
+document.addEventListener("keydown", (evento) => {
+  if (evento.key === "Escape" && !el.modalEstagio.classList.contains("oculto")) fecharModalEstagio();
+});
+[el.modalBusca, el.modalCompetencia, el.modalGerente].forEach((campo) => {
+  campo.addEventListener("input", renderizarModalTabela);
+  campo.addEventListener("change", renderizarModalTabela);
+});
 
 // Re-renderiza "Evolução Mensal" quando a largura do container muda (ex.:
 // redimensionar a janela) — o viewBox do gráfico é calculado a partir da

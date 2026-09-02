@@ -147,22 +147,20 @@
           <table id="tabela">
             <colgroup>
               <col style="width: 15%">
+              <col style="width: 10%">
+              <col style="width: 8%">
+              <col style="width: 11%">
               <col style="width: 9%">
-              <col style="width: 5%">
-              <col style="width: 6%">
+              <col style="width: 10%">
               <col style="width: 9%">
               <col style="width: 8%">
               <col style="width: 8%">
-              <col style="width: 6%">
-              <col style="width: 8%">
-              <col style="width: 7%">
-              <col style="width: 17%">
+              <col style="width: 12%">
             </colgroup>
             <thead>
               <tr>
                 <th>Cliente</th>
                 <th>Grupo</th>
-                <th>Unidade</th>
                 <th>Segmento</th>
                 <th>Gerente de Contas</th>
                 <th>Departamento</th>
@@ -182,6 +180,56 @@
       </section>
     </div>
   </main>
+
+  <!-- Modal: obrigações pendentes de um estágio específico. Abre ao clicar
+       numa linha de "Por que está pendente" num card de quebra. -->
+  <div class="modal-overlay oculto" id="modal-estagio">
+    <div class="modal-caixa" role="dialog" aria-modal="true" aria-labelledby="modal-estagio-titulo">
+      <div class="modal-cabecalho">
+        <div class="modal-cabecalho-info">
+          <h3 class="modal-titulo" id="modal-estagio-titulo"></h3>
+          <p class="modal-sub" id="modal-estagio-sub"></p>
+        </div>
+        <button type="button" class="modal-fechar" id="modal-estagio-fechar" aria-label="Fechar">&times;</button>
+      </div>
+      <div class="modal-filtros">
+        <input type="search" id="modal-estagio-busca" class="filtro-input" placeholder="Cliente ou grupo...">
+        <select id="modal-estagio-competencia" class="filtro-select"><option value="">Todas as competências</option></select>
+        <select id="modal-estagio-gerente" class="filtro-select"><option value="">Todos os gerentes</option></select>
+      </div>
+      <div class="modal-corpo">
+        <table class="modal-tabela">
+          <colgroup>
+            <col style="width: 15%">
+            <col style="width: 10%">
+            <col style="width: 8%">
+            <col style="width: 11%">
+            <col style="width: 9%">
+            <col style="width: 10%">
+            <col style="width: 9%">
+            <col style="width: 8%">
+            <col style="width: 8%">
+            <col style="width: 12%">
+          </colgroup>
+          <thead>
+            <tr>
+              <th>Cliente</th>
+              <th>Grupo</th>
+              <th>Segmento</th>
+              <th>Gerente de Contas</th>
+              <th>Departamento</th>
+              <th>Regime</th>
+              <th>Competência</th>
+              <th>Vencimento</th>
+              <th>Status</th>
+              <th>Estágio</th>
+            </tr>
+          </thead>
+          <tbody id="modal-estagio-corpo"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
 
   <script src="static/script.js"></script>
 </body>
