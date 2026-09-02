@@ -94,6 +94,8 @@ O card "Por Regime Tributário" e os placares "Pendente"/"Atrasadas" são clicá
 
 **Ranking "Pendências por Gerente de Contas" removido a pedido do usuário (2026-09-02.)** Já existiu como card de barras (`renderizarRankingGerentes`, `#ranking-gerentes`, CSS `.ranking-*`) combinando `GerenteDeContas` + `Status="Pendente"`; o corte por gerente continua acessível pelos filtros de Gerente de Contas (`#f-gerente`/`#t-gerente`).
 
+**Modal "SPEDs de um estágio" (`#modal-estagio`)**: abre ao clicar numa linha de estágio dentro de um card de quebra (`ligarCliquesMotivo`) com os registros daquele grupo (Regime/Departamento) + Status + estágio. Os filtros do modal são **exatamente os mesmos da tela principal** (busca, Segmento, Regime, Competência, Status, Atraso, Gerente), na mesma ordem, reusando `filtrarConjunto()` — pedido explícito do usuário (2026-09-02). Regime/Status normalmente têm só uma opção porque já vêm fixados pelo contexto do clique.
+
 ### Dashboard (cards + evolução mensal)
 `index.html` + `static/script.js` seguem a estrutura do [[project_relatorio_fechamentos]] (mesmo `static/style.css`): "Por Regime Tributário" (grid único de cards, sem abas nem faixas aninhadas) e "Evolução Mensal" (barra por mês de SPEDs entregues, usando `DataAlteracaoEstagio` de quem tem `Status`="Entregue").
 - **Mensal, não diária (2026-08-20, correção do usuário)**: o robô sempre consulta o ano inteiro (01/01 até hoje), então uma barra por dia chegaria a 150+ barras ilegíveis. `contarEntregasPorMes()`/`formatarMesCurto()` agrupam por `AAAA-MM`.

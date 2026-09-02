@@ -65,7 +65,11 @@ const el = {
   modalEstagioCorpo: document.getElementById("modal-estagio-corpo"),
   modalEstagioFechar: document.getElementById("modal-estagio-fechar"),
   modalBusca: document.getElementById("modal-estagio-busca"),
+  modalSegmento: document.getElementById("modal-estagio-segmento"),
+  modalRegime: document.getElementById("modal-estagio-regime"),
   modalCompetencia: document.getElementById("modal-estagio-competencia"),
+  modalStatus: document.getElementById("modal-estagio-status"),
+  modalAtraso: document.getElementById("modal-estagio-atraso"),
   modalGerente: document.getElementById("modal-estagio-gerente"),
 };
 
@@ -297,8 +301,11 @@ function renderizarCorpoQuebra(g) {
 // ── Modal: SPEDs de um estágio ───────────────────────────────────────
 // Aberto ao clicar numa linha de estágio (bloco Entregue OU Pendente) num
 // card de quebra. Mostra a tabela dos registros daquele grupo
-// (Departamento ou Regime) + Status + estágio, com filtro próprio (busca +
-// Competência + Gerente) — independente dos filtros da página.
+// (Departamento ou Regime) + Status + estágio, com o mesmo conjunto de
+// filtros da tela principal (busca, Segmento, Regime, Competência, Status,
+// Atraso, Gerente — reusa filtrarConjunto()) — independente dos filtros da
+// página. Regime/Status vêm pré-fixados pelo contexto do clique, então os
+// selects deles normalmente têm só uma opção além de "Todos".
 let modalRegistros = [];
 let modalEstagioLabel = "";
 let modalGrupoLabel = "";
@@ -316,10 +323,18 @@ function abrirModalEstagio(registros, estagio, grupoLabel, statusNome) {
   const competencias = new Set(
     registros.map((r) => r.Competencia && r.Competencia.slice(0, 7)).filter(Boolean)
   );
+  repopularSelect(el.modalSegmento, new Set(registros.map((r) => r.Segmento).filter(Boolean)));
+  repopularSelect(el.modalRegime, new Set(registros.map((r) => r.RegimeTributario).filter(Boolean)));
   repopularSelect(el.modalCompetencia, competencias, formatarCompetenciaMes);
+  repopularSelect(el.modalStatus, new Set(registros.map((r) => r.Status).filter(Boolean)));
+  repopularSelect(el.modalAtraso, new Set(registros.map((r) => r.Atrasado).filter(Boolean)));
   repopularSelect(el.modalGerente, new Set(registros.map((r) => r.GerenteDeContas).filter(Boolean)));
   el.modalBusca.value = "";
+  el.modalSegmento.value = "";
+  el.modalRegime.value = "";
   el.modalCompetencia.value = "";
+  el.modalStatus.value = "";
+  el.modalAtraso.value = "";
   el.modalGerente.value = "";
 
   renderizarModalTabela();
@@ -330,18 +345,14 @@ function abrirModalEstagio(registros, estagio, grupoLabel, statusNome) {
 }
 
 function renderizarModalTabela() {
-  const busca = el.modalBusca.value.trim().toLowerCase();
-  const competencia = el.modalCompetencia.value;
-  const gerente = el.modalGerente.value;
+  const camposModal = {
+    busca: el.modalBusca, segmento: el.modalSegmento, regime: el.modalRegime,
+    competencia: el.modalCompetencia, status: el.modalStatus, atraso: el.modalAtraso,
+    gerente: el.modalGerente,
+  };
+  const filtrados = filtrarConjunto(modalRegistros, camposModal);
 
-  const filtrados = modalRegistros.filter((r) => {
-    if (competencia && (!r.Competencia || !r.Competencia.startsWith(competencia))) return false;
-    if (gerente && r.GerenteDeContas !== gerente) return false;
-    if (busca && !`${r.Cliente || ""} ${r.Grupo || ""}`.toLowerCase().includes(busca)) return false;
-    return true;
-  });
-
-  const temFiltro = busca || competencia || gerente;
+  const temFiltro = Object.values(camposModal).some((c) => c.value.trim() !== "");
   const contagem = temFiltro
     ? `${filtrados.length.toLocaleString("pt-BR")} de ${modalRegistros.length.toLocaleString("pt-BR")} ${modalSubstantivo}`
     : `${modalRegistros.length.toLocaleString("pt-BR")} ${modalSubstantivo}`;
@@ -986,7 +997,8 @@ el.modalEstagio.addEventListener("click", (evento) => {
 document.addEventListener("keydown", (evento) => {
   if (evento.key === "Escape" && !el.modalEstagio.classList.contains("oculto")) fecharModalEstagio();
 });
-[el.modalBusca, el.modalCompetencia, el.modalGerente].forEach((campo) => {
+[el.modalBusca, el.modalSegmento, el.modalRegime, el.modalCompetencia,
+  el.modalStatus, el.modalAtraso, el.modalGerente].forEach((campo) => {
   campo.addEventListener("input", renderizarModalTabela);
   campo.addEventListener("change", renderizarModalTabela);
 });
