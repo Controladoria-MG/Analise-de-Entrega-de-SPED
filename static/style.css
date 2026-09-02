@@ -13,7 +13,7 @@
   --bg-hover-row: #fafafa;
 
   /* Rampa de vermelho MG usada no dashboard inteiro (KPIs, cards, barra de
-     status, ranking) — claro a profundo = leve a crítico. */
+     status) — claro a profundo = leve a crítico. */
   --vermelho-claro: #F0747D;
   --vermelho-medio: #E4032E;
   --vermelho-profundo: #A80022;
@@ -744,58 +744,6 @@ main {
 
 .ponto.recebida { background: var(--status-good); }
 .ponto.pendente { background: var(--status-warning); }
-
-/* Ranking (Gerente de Contas) */
-
-.ranking-lista {
-  display: flex;
-  flex-direction: column;
-  gap: 9px;
-  margin-top: 12px;
-}
-
-.ranking-linha {
-  display: grid;
-  grid-template-columns: 160px 1fr 40px;
-  align-items: center;
-  gap: 10px;
-  cursor: pointer;
-  padding: 4px 6px;
-  border-radius: 4px;
-}
-
-.ranking-linha:hover { background: var(--fundo); }
-
-.ranking-linha.selecionado .ranking-rotulo { color: var(--mg-vermelho); font-weight: 700; }
-
-.ranking-rotulo {
-  font-size: 0.82rem;
-  color: var(--cinza-texto);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.ranking-trilha {
-  height: 16px;
-  background: var(--status-neutral-bg);
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.ranking-barra {
-  height: 100%;
-  background: var(--mg-vermelho);
-  border-radius: 4px;
-}
-
-.ranking-valor {
-  font-size: 0.82rem;
-  font-weight: 700;
-  color: var(--mg-vermelho);
-  font-variant-numeric: tabular-nums;
-  text-align: right;
-}
 
 /* Tabela */
 

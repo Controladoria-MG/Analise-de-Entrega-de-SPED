@@ -5,7 +5,7 @@ let dados = [];
 // nada mistura os dois ao mesmo tempo.
 let dadosTipo = [];
 // `dadosTipo` recortado pela navegação (Unidade -> Departamento) — é o que
-// todo o corpo do dashboard (filtros, cards, ranking, evolução, tabela)
+// todo o corpo do dashboard (filtros, cards, evolução, tabela)
 // enxerga. Ver `escopo` e calcularDadosEscopo.
 let dadosEscopo = [];
 let tipoSpedAtivo = null;
@@ -49,9 +49,8 @@ const el = {
   corpo: document.getElementById("tabela-corpo"),
   contagem: document.getElementById("contagem"),
   quebraConteudo: document.getElementById("quebra-conteudo"),
-  rankingGerentes: document.getElementById("ranking-gerentes"),
   evolucaoGrafico: document.getElementById("evolucao-grafico"),
-  // Filtro independente, só da tabela — não afeta KPIs/cards/ranking.
+  // Filtro independente, só da tabela — não afeta KPIs/cards.
   tBusca: document.getElementById("t-busca"),
   tSegmento: document.getElementById("t-segmento"),
   tRegime: document.getElementById("t-regime"),
@@ -127,7 +126,6 @@ function aplicarFiltros() {
   });
 
   renderizarQuebras();
-  renderizarRankingGerentes();
   renderizarEvolucao();
 }
 
@@ -228,9 +226,9 @@ function alternarFiltroEMostrarTabela(campo, valor) {
 }
 
 // Igual a alternarFiltroEMostrarTabela, mas fixa (ou desliga, se já estava
-// ativa a combinação inteira — mesmo toggle) vários campos de uma vez — hoje
-// só o ranking por Gerente usa (combina Gerente + Status=Pendente, já que o
-// número mostrado ali é só as pendências do gerente).
+// ativa a combinação inteira — mesmo toggle) vários campos de uma vez — os
+// placares "Pendente" e "Atrasadas" usam (Status=Pendente, opcionalmente
+// combinado com Atrasado=Atrasado).
 function filtrarPorVariosEMostrarTabela(pares) {
   const jaEstavaAtivo = pares.every(([campo, valor]) => CAMPO_PARA_FILTROS[campo]()[0].value === valor);
   limparFiltrosGerais();
@@ -552,55 +550,6 @@ function renderizarQuebras() {
   renderizarQuebraGrupo(el.quebraConteudo, "RegimeTributario", el.regime);
 }
 
-function renderizarRankingGerentes() {
-  const contagens = new Map();
-  filtrados.forEach((r) => {
-    const gerente = r.GerenteDeContas;
-    if (!gerente) return;
-    if (!contagens.has(gerente)) contagens.set(gerente, { total: 0, pendente: 0 });
-    const c = contagens.get(gerente);
-    c.total++;
-    if (r.Status !== "Entregue") c.pendente++;
-  });
-
-  const lista = [...contagens.entries()]
-    .filter(([, c]) => c.pendente > 0)
-    .sort((a, b) => b[1].pendente - a[1].pendente)
-    .slice(0, 10);
-
-  if (!lista.length) {
-    el.rankingGerentes.innerHTML = `<p style="color:var(--cinza-muted); font-size:0.85rem; margin:8px 0 0;">Nenhuma pendência no filtro atual.</p>`;
-    return;
-  }
-
-  const maior = Math.max(...lista.map(([, c]) => c.pendente));
-  const selecionado = el.gerente.value;
-
-  el.rankingGerentes.innerHTML = lista
-    .map(([nome, c]) => {
-      const largura = (c.pendente / maior) * 100;
-      const ativo = nome === selecionado ? " selecionado" : "";
-      return `
-        <div class="ranking-linha${ativo}" data-valor="${nome.replace(/"/g, "&quot;")}" title="${nome}: ${c.pendente} de ${c.total} pendente(s)">
-          <div class="ranking-rotulo">${nome}</div>
-          <div class="ranking-trilha"><div class="ranking-barra" style="width:${largura}%"></div></div>
-          <div class="ranking-valor">${c.pendente}</div>
-        </div>
-      `;
-    })
-    .join("");
-
-  // O número mostrado no ranking é só as pendências do gerente (c.pendente),
-  // não o total dele — o filtro precisa combinar Gerente + Status=Pendente
-  // pra mostrar exatamente esse número na tabela.
-  el.rankingGerentes.querySelectorAll(".ranking-linha").forEach((linhaEl) => {
-    linhaEl.addEventListener("click", () => filtrarPorVariosEMostrarTabela([
-      ["GerenteDeContas", linhaEl.dataset.valor],
-      ["Status", "Pendente"],
-    ]));
-  });
-}
-
 function celula(texto) {
   return texto === null || texto === undefined || texto === "" ? "—" : texto;
 }
@@ -709,7 +658,7 @@ function formatarMesCurto(anoMes) {
 // Quantos SPEDs foram entregues (DataAlteracaoEstagio de quem tem
 // Status === "Entregue") em cada mês — vem direto da planilha (cada linha já
 // tem sua própria data), não de um histórico acumulado por execução do robô.
-// Respeita os filtros ativos (mesmo conjunto `filtrados` dos cards/ranking).
+// Respeita os filtros ativos (mesmo conjunto `filtrados` dos cards).
 // Granularidade mensal (não diária, como no Radar Fiscal) porque o período
 // consultado é o ano inteiro — um gráfico por dia teria 150+ barras
 // ilegíveis; por mês bate com a granularidade natural dos dados.
@@ -868,7 +817,7 @@ function limparFiltrosTabela() {
   el.tGerente.value = "";
 }
 
-// Corpo do dashboard (Filtros, Por Regime Tributário, Evolução, Ranking,
+// Corpo do dashboard (Filtros, Por Regime Tributário, Evolução,
 // Filtros da tabela, Tabela) — compartilhado entre a tela da Unidade
 // (consolidado) e a tela do Departamento, só muda o recorte de `dadosEscopo`.
 function atualizarCorpoDashboard() {
@@ -972,7 +921,7 @@ function selecionarTipoSped(tipo) {
 
 const UNIDADES_EXCLUIDAS = ["MG EXPRESS"];
 // Departamento excluído a pedido do usuário (2026-08-20) — não deve aparecer
-// em nenhum filtro, card, ranking, evolução ou tabela do portal.
+// em nenhum filtro, card, evolução ou tabela do portal.
 const DEPARTAMENTOS_EXCLUIDOS = ["MG - SANTOS"];
 
 function carregarDados() {

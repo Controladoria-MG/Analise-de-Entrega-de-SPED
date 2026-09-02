@@ -18,8 +18,8 @@ ARQUIVO_STATUS = PASTA_DESTINO / "status.json"
 ARQUIVO_DADOS_PORTAL = PASTA_DESTINO / "analise_sped_dados.json"
 
 # Subconjunto de colunas que o portal de fato usa (KPIs, cards por Tipo
-# SPED/Departamento, ranking por Gerente, evolução diária, filtros e
-# tabela) — ver static/script.js.
+# SPED/Departamento, evolução mensal, filtros e tabela) — ver
+# static/script.js.
 COLUNAS_PORTAL = [
     "IdCliente", "Cliente", "Grupo", "Unidade", "Segmento", "Departamento",
     "GerenteDeContas", "GerenteMaster", "RegimeTributario", "TipoSped",
