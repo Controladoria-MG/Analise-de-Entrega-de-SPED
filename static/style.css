@@ -696,9 +696,6 @@ main {
   overflow: visible;
   text-overflow: clip;
   line-height: 1.3;
-  text-decoration: underline;
-  text-decoration-color: var(--borda);
-  text-underline-offset: 2px;
 }
 
 .status-nome-vazio {
