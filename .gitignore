@@ -5,3 +5,7 @@ __pycache__/
 *.log
 data/analise_sped/*.xlsx
 data/analise_sped/_temp/
+
+# O robô (selenium do MG Controle) roda só localmente, pelo hub "Atualização
+# de bases" — não faz parte do dashboard estático publicado. Fica fora do repo.
+backend/
