@@ -18,7 +18,7 @@ Raiz/
 └── backend/
     ├── sped_relatorios.py   (robô — Intranet MG Controle, selenium)
     ├── resumo.py            (junta as duas exportações + calcula atraso)
-    └── orquestrador.py      (roda o robô + resumo.py + gera os JSONs do portal)
+    └── orquestrador.py      (roda o robô + resumo.py + escreve status.json; o portal lê resumo.xlsx)
 ```
 
 ---
@@ -40,15 +40,14 @@ Raiz/
 - Todo arquivo de dados fica dentro de `data/analise_sped/`.
 - Arquivos gerados:
     - `sped_icms.xlsx` / `sped_contribuicoes.xlsx`: exportações brutas do MG Controle (Relatório Gerencial > Totalizador), cada uma com 2 abas — `BaseSPEDPedente` (pendentes) e `BaseSPEDOk` (entregues), 27 colunas, sobrescritas a cada execução.
-    - `resumo.xlsx`: as duas exportações unidas numa base só (`Status`="Entregue"/"Pendente", `TipoSped`="ICMS"/"Contribuições", `Atrasado`, `DiasAtraso`) — é o que o portal usa. Ver `backend/resumo.py`.
-    - `analise_sped_dados.json`: subconjunto de colunas do resumo (ver `COLUNAS_PORTAL` em `backend/orquestrador.py`) para o portal ler via `fetch`.
-    - `status.json`: `{ultima_execucao, registros}`.
+    - `resumo.xlsx`: **a planilha única que o portal lê** (fetch + SheetJS no navegador). As duas exportações (ICMS + Contribuições) × 2 abas cada, empilhadas numa base só, com `Status`="Entregue"/"Pendente", `TipoSped`="ICMS"/"Contribuições", `Atrasado`, `DiasAtraso`. As colunas de data (`Competencia`, `DataVencimento`, `DataAlteracaoEstagio`) saem como texto ISO `AAAA-MM-DD` — ver `COLUNAS_DATA_ISO` em `backend/resumo.py`, o front faz `.slice`/`.startsWith` nelas. Não há mais JSON intermediário: mesmo que a extração traga N arquivos/abas, o final é 1 planilha só.
+    - `status.json`: `{ultima_execucao, registros}` — só o carimbo de "atualizado em".
 
 ### Backend (`backend/`)
 - `sped_relatorios.py`: automatiza a **Intranet** (`https://aplicativo.mgcontecnica.com.br/#/home`, via **selenium**) — login > tile "MG Controle" > Operacional > (Menu SPED) Relatórios > Relatório Gerencial. Numa única sessão de navegador, exporta os dois tipos (ICMS e Contribuições) filtrados de `01/01/{ano atual}` até hoje. Expõe `executar(log=None) -> dict[str, Path]`. Detalhes de navegação e seletores no docstring do próprio arquivo.
-- `resumo.py`: lê as 2 abas de cada um dos 2 arquivos brutos, empilha tudo numa base só, limpa `RegimeTributario` (mesmo `MAPA_REGIME` do [[project_radar_fiscal]]) e calcula `Atrasado`/`DiasAtraso`. Expõe `gerar_resumo(log=None) -> DataFrame`.
-- `orquestrador.py`: chama `sped_relatorios.executar()` + `resumo.gerar_resumo()`, gera `analise_sped_dados.json` (subconjunto `COLUNAS_PORTAL`) e `status.json`. Ponto de entrada: `python backend/orquestrador.py`.
-- **Não existe backend web** — o portal é 100% estático (lê os JSONs via `fetch`), mesmo padrão dos outros portais MG.
+- `resumo.py`: lê as 2 abas de cada um dos 2 arquivos brutos, empilha tudo numa base só, limpa `RegimeTributario` (mesmo `MAPA_REGIME` do [[project_radar_fiscal]]) e calcula `Atrasado`/`DiasAtraso`. Grava `resumo.xlsx` (via `_escrever_resumo`, que serializa as datas como texto ISO). Expõe `gerar_resumo(log=None) -> DataFrame`.
+- `orquestrador.py`: chama `sped_relatorios.executar()` + `resumo.gerar_resumo()` e escreve `status.json`. **Não gera mais JSON de dados** — o portal lê o `resumo.xlsx` direto. Ponto de entrada: `python backend/orquestrador.py`.
+- **Não existe backend web** — o portal é 100% estático (lê `resumo.xlsx` via `fetch` + SheetJS), mesmo padrão dos outros portais MG (Chamados, Tarefas, Tarefas Baixadas).
 - **NUNCA** importe ou referencie arquivos de `static/` a partir do backend.
 
 ### Regra de negócio — vencimento e atraso
@@ -59,7 +58,7 @@ Raiz/
 
 ### `.gitignore`
 - Inclui obrigatoriamente `.env`, `__pycache__/`, `*.log`, `.venv/`.
-- Em `data/analise_sped/`: só os `.xlsx` brutos e a subpasta temporária de download (`_temp/`) são ignorados. `analise_sped_dados.json` e `status.json` são versionados — permite portal hospedado (GitHub Pages) mostrar dados atualizados a cada push, mesmo padrão do Radar Fiscal.
+- Em `data/analise_sped/`: os `.xlsx` brutos (`sped_icms`/`sped_contribuicoes`) e o `_temp/` são ignorados; **`resumo.xlsx` é a exceção** (`!data/analise_sped/resumo.xlsx` no `.gitignore`) e, junto com `status.json`, é versionado — é o que o GitHub Pages serve ao portal a cada push.
 - **NUNCA** versione credenciais.
 
 ### Como rodar
@@ -72,9 +71,9 @@ Acessar `http://localhost:8793` (fetch de arquivo local via `file://` é bloquea
 
 ### Separação ICMS / Contribuições (2026-08-20, a pedido explícito do usuário)
 ICMS e Contribuições são dois relatórios diferentes (regras de vencimento diferentes) — **a página inteira sempre mostra só um tipo por vez**, escolhido numa aba grande no topo (`#tipo-sped-abas`). Não existe um filtro "Tipo SPED" solto nem uma quebra "Por Tipo SPED" nos cards — a escolha do tipo é o contexto global da página.
-- `static/script.js`: `dados` (JSON bruto completo) é sempre filtrado por `tipoSpedAtivo` em `dadosTipo` (`selecionarTipoSped()`); `dadosTipo` é então recortado pela navegação em `dadosEscopo` — **tudo** (cards de navegação, selects de filtro, cards, evolução, tabela) deriva desses, nunca de `dados` diretamente.
+- `static/script.js`: `carregarDados()` faz `fetch` do `resumo.xlsx`, parseia com `XLSX.read`/`sheet_to_json` e joga tudo em `dados`. `dados` é sempre filtrado por `tipoSpedAtivo` em `dadosTipo` (`selecionarTipoSped()`); `dadosTipo` é então recortado pela navegação em `dadosEscopo` — **tudo** (cards de navegação, selects de filtro, cards, evolução, tabela) deriva desses, nunca de `dados` diretamente.
 - Trocar de aba volta pro Painel de Unidades, **reseta** todos os filtros e repopula as opções de cada `<select>` (`repopularSelect()`).
-- Se um dia entrar um 3º/4º tipo SPED (o MG Controle também tem "Contábil"/"ECF", mas o robô só baixa ICMS e Contribuições — ver `backend/sped_relatorios.py`), as abas já aparecem automaticamente (`renderizarTipoSpedAbas()` lê os tipos distintos do JSON), só a ordem é fixa via `ORDEM_TIPO_SPED`.
+- Se um dia entrar um 3º/4º tipo SPED (o MG Controle também tem "Contábil"/"ECF", mas o robô só baixa ICMS e Contribuições — ver `backend/sped_relatorios.py`), as abas já aparecem automaticamente (`renderizarTipoSpedAbas()` lê os tipos distintos da coluna `TipoSped` da planilha), só a ordem é fixa via `ORDEM_TIPO_SPED`.
 
 ### Navegação Unidade → Departamento (2026-08-27, mesma cara do [[project_relatorio_fechamentos]])
 Portado do Controle de Fechamentos: em vez de chips de Unidade + abas de quebra, a página tem 3 "telas" controladas por `escopo = { unidade, depto }` em `static/script.js` (`selecionarTipoSped()` reseta pra `{null, null}`):

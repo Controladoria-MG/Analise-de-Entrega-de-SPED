@@ -935,11 +935,19 @@ const UNIDADES_EXCLUIDAS = ["MG EXPRESS"];
 // em nenhum filtro, card, evolução ou tabela do portal.
 const DEPARTAMENTOS_EXCLUIDOS = ["MG - SANTOS"];
 
+// O portal lê uma planilha única (data/analise_sped/resumo.xlsx) — mesmo que
+// a extração traga vários arquivos/abas, o robô sempre entrega 1 planilha. O
+// parsing do .xlsx é no navegador (SheetJS), igual aos outros portais MG.
 function carregarDados() {
-  fetch("data/analise_sped/analise_sped_dados.json?" + Date.now())
-    .then((r) => r.json())
-    .then((json) => {
-      dados = json.filter((r) => !UNIDADES_EXCLUIDAS.includes(r.Unidade) && !DEPARTAMENTOS_EXCLUIDOS.includes(r.Departamento));
+  fetch("data/analise_sped/resumo.xlsx?" + Date.now())
+    .then((r) => {
+      if (!r.ok) throw new Error("resumo.xlsx não encontrado");
+      return r.arrayBuffer();
+    })
+    .then((buffer) => {
+      const wb = XLSX.read(buffer, { type: "array" });
+      const linhas = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: null });
+      dados = linhas.filter((r) => !UNIDADES_EXCLUIDAS.includes(r.Unidade) && !DEPARTAMENTOS_EXCLUIDOS.includes(r.Departamento));
       if (!dados.length) {
         el.unidadesGrid.innerHTML = `<p class="evolucao-vazio">Nenhum dado exportado ainda — rode o robô (backend/orquestrador.py).</p>`;
         return;
