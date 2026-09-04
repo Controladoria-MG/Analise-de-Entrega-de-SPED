@@ -17,9 +17,11 @@ Raiz/
 │   └── analise_sped/
 └── backend/
     ├── sped_relatorios.py   (robô — Intranet MG Controle, selenium)
-    ├── resumo.py            (junta as duas exportações + calcula atraso)
-    └── orquestrador.py      (roda o robô + resumo.py + escreve status.json; o portal lê resumo.xlsx)
+    ├── resumo_sped.py       (junta as duas exportações + calcula atraso; nome único p/ não colidir no hub — ver abaixo)
+    └── orquestrador.py      (roda o robô + resumo_sped.py + escreve status.json; o portal lê resumo.xlsx)
 ```
+
+> **Por que `resumo_sped.py` e não `resumo.py`:** o hub "Atualização de bases" carrega este `orquestrador.py` e o do **Controle de Fechamentos** no mesmo processo Flask. Aquele projeto também tem um `backend/resumo.py` (assinatura diferente: `gerar_resumo(arquivo_radar, arquivo_checklist, arquivo_saida)`). Com `import resumo` nos dois, o `sys.modules["resumo"]` fica sendo o de quem importou primeiro — e o outro quebra com `gerar_resumo() missing 2 required positional arguments`. Nome de módulo único resolve. `orquestrador.py` faz `import resumo_sped as resumo` pra manter o resto do arquivo igual.
 
 ---
 
@@ -40,13 +42,13 @@ Raiz/
 - Todo arquivo de dados fica dentro de `data/analise_sped/`.
 - Arquivos gerados:
     - `sped_icms.xlsx` / `sped_contribuicoes.xlsx`: exportações brutas do MG Controle (Relatório Gerencial > Totalizador), cada uma com 2 abas — `BaseSPEDPedente` (pendentes) e `BaseSPEDOk` (entregues), 27 colunas, sobrescritas a cada execução.
-    - `resumo.xlsx`: **a planilha única que o portal lê** (fetch + SheetJS no navegador). As duas exportações (ICMS + Contribuições) × 2 abas cada, empilhadas numa base só, com `Status`="Entregue"/"Pendente", `TipoSped`="ICMS"/"Contribuições", `Atrasado`, `DiasAtraso`. As colunas de data (`Competencia`, `DataVencimento`, `DataAlteracaoEstagio`) saem como texto ISO `AAAA-MM-DD` — ver `COLUNAS_DATA_ISO` em `backend/resumo.py`, o front faz `.slice`/`.startsWith` nelas. Não há mais JSON intermediário: mesmo que a extração traga N arquivos/abas, o final é 1 planilha só.
+    - `resumo.xlsx`: **a planilha única que o portal lê** (fetch + SheetJS no navegador). As duas exportações (ICMS + Contribuições) × 2 abas cada, empilhadas numa base só, com `Status`="Entregue"/"Pendente", `TipoSped`="ICMS"/"Contribuições", `Atrasado`, `DiasAtraso`. As colunas de data (`Competencia`, `DataVencimento`, `DataAlteracaoEstagio`) saem como texto ISO `AAAA-MM-DD` — ver `COLUNAS_DATA_ISO` em `backend/resumo_sped.py`, o front faz `.slice`/`.startsWith` nelas. Não há mais JSON intermediário: mesmo que a extração traga N arquivos/abas, o final é 1 planilha só.
     - `status.json`: `{ultima_execucao, registros}` — só o carimbo de "atualizado em".
 
 ### Backend (`backend/`)
 - `sped_relatorios.py`: automatiza a **Intranet** (`https://aplicativo.mgcontecnica.com.br/#/home`, via **selenium**) — login > tile "MG Controle" > Operacional > (Menu SPED) Relatórios > Relatório Gerencial. Numa única sessão de navegador, exporta os dois tipos (ICMS e Contribuições) filtrados de `01/01/{ano atual}` até hoje. Expõe `executar(log=None) -> dict[str, Path]`. Detalhes de navegação e seletores no docstring do próprio arquivo.
-- `resumo.py`: lê as 2 abas de cada um dos 2 arquivos brutos, empilha tudo numa base só, limpa `RegimeTributario` (mesmo `MAPA_REGIME` do [[project_radar_fiscal]]) e calcula `Atrasado`/`DiasAtraso`. Grava `resumo.xlsx` (via `_escrever_resumo`, que serializa as datas como texto ISO). Expõe `gerar_resumo(log=None) -> DataFrame`.
-- `orquestrador.py`: chama `sped_relatorios.executar()` + `resumo.gerar_resumo()` e escreve `status.json`. **Não gera mais JSON de dados** — o portal lê o `resumo.xlsx` direto. Ponto de entrada: `python backend/orquestrador.py`.
+- `resumo_sped.py`: lê as 2 abas de cada um dos 2 arquivos brutos, empilha tudo numa base só, limpa `RegimeTributario` (mesmo `MAPA_REGIME` do [[project_radar_fiscal]]) e calcula `Atrasado`/`DiasAtraso`. Grava `resumo.xlsx` (via `_escrever_resumo`, que serializa as datas como texto ISO). Expõe `gerar_resumo(log=None) -> DataFrame`. (Nome com sufixo `_sped` de propósito — ver nota na estrutura de diretórios.)
+- `orquestrador.py`: chama `sped_relatorios.executar()` + `resumo.gerar_resumo()` (via `import resumo_sped as resumo`) e escreve `status.json`. **Não gera mais JSON de dados** — o portal lê o `resumo.xlsx` direto. Ponto de entrada: `python backend/orquestrador.py`.
 - **Não existe backend web** — o portal é 100% estático (lê `resumo.xlsx` via `fetch` + SheetJS), mesmo padrão dos outros portais MG (Chamados, Tarefas, Tarefas Baixadas).
 - **NUNCA** importe ou referencie arquivos de `static/` a partir do backend.
 
@@ -54,7 +56,7 @@ Raiz/
 - **SPED ICMS** vence no mês seguinte ao da competência (competência 07 → vence em 08).
 - **SPED Contribuições** vence dois meses depois da competência (competência 07 → vence em 09).
 - O próprio MG Controle já calcula e entrega `DataVencimento` pronta no export (confirmado batendo com a regra acima em teste real) — **o robô/resumo não recalculam essa data**, só a usam.
-- `Atrasado` (`backend/resumo.py`): compara a data de referência (para quem já entregou, `DataAlteracaoEstagio`; para quem ainda está pendente, hoje) com `DataVencimento`. `DiasAtraso` é a diferença em dias (0 se não atrasado).
+- `Atrasado` (`backend/resumo_sped.py`): compara a data de referência (para quem já entregou, `DataAlteracaoEstagio`; para quem ainda está pendente, hoje) com `DataVencimento`. `DiasAtraso` é a diferença em dias (0 se não atrasado).
 
 ### `.gitignore`
 - Inclui obrigatoriamente `.env`, `__pycache__/`, `*.log`, `.venv/`.
@@ -99,7 +101,7 @@ O card "Por Regime Tributário" e os placares "Pendente"/"Atrasadas" são clicá
 `index.html` + `static/script.js` seguem a estrutura do [[project_relatorio_fechamentos]] (mesmo `static/style.css`): "Por Regime Tributário" (grid único de cards, sem abas nem faixas aninhadas) e "Evolução Mensal" (barra por mês de SPEDs entregues, usando `DataAlteracaoEstagio` de quem tem `Status`="Entregue").
 - **Mensal, não diária (2026-08-20, correção do usuário)**: o robô sempre consulta o ano inteiro (01/01 até hoje), então uma barra por dia chegaria a 150+ barras ilegíveis. `contarEntregasPorMes()`/`formatarMesCurto()` agrupam por `AAAA-MM`.
 - A quebra interna de cada card é **"Status" (Entregue/Pendente) → "Atrasado/No Prazo"** — só 2 níveis (`renderizarStatusGrupo()`).
-- **Tabela numa página só, com scroll interno** (`.tabela-scroll` tem `max-height: 640px` + `overflow-y: auto`; `thead th` é `position: sticky`). A paginação client-side (botões Anterior/Próxima) foi **removida a pedido do usuário (2026-08-27)**. Colunas: Cliente, Grupo, Unidade, Segmento, Gerente de Contas, Departamento, Regime, Competência, Vencimento, Status (Entregue/Pendente) e **Estágio** (estágio granular no MG Controle, ex. "19 - Arquivo não recebido" — coluna `Estagio` do bruto, limpa em `resumo.py::_limpar_estagio` tirando a classificação entre parênteses no fim; adicionada a pedido do usuário 2026-08-27). Sem coluna "Tipo SPED" (redundante — a página já está filtrada por tipo).
+- **Tabela numa página só, com scroll interno** (`.tabela-scroll` tem `max-height: 640px` + `overflow-y: auto`; `thead th` é `position: sticky`). A paginação client-side (botões Anterior/Próxima) foi **removida a pedido do usuário (2026-08-27)**. Colunas: Cliente, Grupo, Unidade, Segmento, Gerente de Contas, Departamento, Regime, Competência, Vencimento, Status (Entregue/Pendente) e **Estágio** (estágio granular no MG Controle, ex. "19 - Arquivo não recebido" — coluna `Estagio` do bruto, limpa em `resumo_sped.py::_limpar_estagio` tirando a classificação entre parênteses no fim; adicionada a pedido do usuário 2026-08-27). Sem coluna "Tipo SPED" (redundante — a página já está filtrada por tipo).
 - **Performance da tabela (2026-08-27, o usuário reclamou de um "engasgo" de ~0,8s ao entrar numa unidade grande)**: 3 medidas, todas necessárias —
   1. **Pré-formatação no carregamento** (`carregarDados`): `nomeComId`/`formatarCompetencia`/`formatarDataCurta2` rodam UMA vez por linha e ficam em `r._cli`/`_uni`/`_comp`/`_venc`. `toLocaleDateString` com locale custa ~45µs; refazer isso pras ~7 mil linhas × 2 datas a cada render era o grosso do engasgo (~640ms).
   2. **Render em lotes** (`renderizarTabela`): 1º lote (80 linhas) síncrono, resto anexado via `setTimeout` (NÃO `requestAnimationFrame` — não roda com a aba em segundo plano). `tokenRender` aborta o preenchimento em andamento se o filtro mudar no meio.
