@@ -41,6 +41,8 @@ const el = {
   busca: document.getElementById("f-busca"),
   segmento: document.getElementById("f-segmento"),
   regime: document.getElementById("f-regime"),
+  prioridade: document.getElementById("f-prioridade"),
+  docSituacao: document.getElementById("f-doc-situacao"),
   competencia: document.getElementById("f-competencia"),
   status_: document.getElementById("f-status"),
   atraso: document.getElementById("f-atraso"),
@@ -54,6 +56,8 @@ const el = {
   tBusca: document.getElementById("t-busca"),
   tSegmento: document.getElementById("t-segmento"),
   tRegime: document.getElementById("t-regime"),
+  tPrioridade: document.getElementById("t-prioridade"),
+  tDocSituacao: document.getElementById("t-doc-situacao"),
   tCompetencia: document.getElementById("t-competencia"),
   tStatus: document.getElementById("t-status"),
   tAtraso: document.getElementById("t-atraso"),
@@ -67,6 +71,8 @@ const el = {
   modalBusca: document.getElementById("modal-estagio-busca"),
   modalSegmento: document.getElementById("modal-estagio-segmento"),
   modalRegime: document.getElementById("modal-estagio-regime"),
+  modalPrioridade: document.getElementById("modal-estagio-prioridade"),
+  modalDocSituacao: document.getElementById("modal-estagio-doc-situacao"),
   modalCompetencia: document.getElementById("modal-estagio-competencia"),
   modalStatus: document.getElementById("modal-estagio-status"),
   modalAtraso: document.getElementById("modal-estagio-atraso"),
@@ -103,6 +109,8 @@ function filtrarConjunto(conjunto, campos) {
   const busca = campos.busca.value.trim().toLowerCase();
   const segmento = campos.segmento.value;
   const regime = campos.regime.value;
+  const prioridade = campos.prioridade.value;
+  const docSituacao = campos.docSituacao.value;
   const competencia = campos.competencia.value;
   const status = campos.status.value;
   const atraso = campos.atraso.value;
@@ -111,6 +119,8 @@ function filtrarConjunto(conjunto, campos) {
   return conjunto.filter((r) => {
     if (segmento && r.Segmento !== segmento) return false;
     if (regime && r.RegimeTributario !== regime) return false;
+    if (prioridade && r.Prioridade !== prioridade) return false;
+    if (docSituacao && r.DocumentosSituacao !== docSituacao) return false;
     if (competencia && (!r.Competencia || !r.Competencia.startsWith(competencia))) return false;
     if (gerente && r.GerenteDeContas !== gerente) return false;
     if (status && r.Status !== status) return false;
@@ -126,6 +136,7 @@ function filtrarConjunto(conjunto, campos) {
 function aplicarFiltros() {
   filtrados = filtrarConjunto(dadosEscopo, {
     busca: el.busca, segmento: el.segmento, regime: el.regime,
+    prioridade: el.prioridade, docSituacao: el.docSituacao,
     competencia: el.competencia, status: el.status_, atraso: el.atraso, gerente: el.gerente,
   });
 
@@ -136,6 +147,7 @@ function aplicarFiltros() {
 function aplicarFiltroTabela() {
   filtradosTabela = filtrarConjunto(dadosEscopo, {
     busca: el.tBusca, segmento: el.tSegmento, regime: el.tRegime,
+    prioridade: el.tPrioridade, docSituacao: el.tDocSituacao,
     competencia: el.tCompetencia, status: el.tStatus, atraso: el.tAtraso, gerente: el.tGerente,
   });
   renderizarTabela();
@@ -194,6 +206,8 @@ function contarDetalhado(rows, chave) {
 const CAMPO_PARA_FILTROS = {
   Segmento: () => [el.segmento, el.tSegmento],
   RegimeTributario: () => [el.regime, el.tRegime],
+  Prioridade: () => [el.prioridade, el.tPrioridade],
+  DocumentosSituacao: () => [el.docSituacao, el.tDocSituacao],
   Competencia: () => [el.competencia, el.tCompetencia],
   Status: () => [el.status_, el.tStatus],
   Atrasado: () => [el.atraso, el.tAtraso],
@@ -210,6 +224,8 @@ function sincronizarFiltroTabelaComGeral() {
   el.tBusca.value = el.busca.value;
   el.tSegmento.value = el.segmento.value;
   el.tRegime.value = el.regime.value;
+  el.tPrioridade.value = el.prioridade.value;
+  el.tDocSituacao.value = el.docSituacao.value;
   el.tCompetencia.value = el.competencia.value;
   el.tStatus.value = el.status_.value;
   el.tAtraso.value = el.atraso.value;
@@ -325,6 +341,8 @@ function abrirModalEstagio(registros, estagio, grupoLabel, statusNome) {
   );
   repopularSelect(el.modalSegmento, new Set(registros.map((r) => r.Segmento).filter(Boolean)));
   repopularSelect(el.modalRegime, new Set(registros.map((r) => r.RegimeTributario).filter(Boolean)));
+  repopularSelect(el.modalPrioridade, new Set(registros.map((r) => r.Prioridade).filter(Boolean)));
+  repopularSelect(el.modalDocSituacao, new Set(registros.map((r) => r.DocumentosSituacao).filter(Boolean)));
   repopularSelect(el.modalCompetencia, competencias, formatarCompetenciaMes);
   repopularSelect(el.modalStatus, new Set(registros.map((r) => r.Status).filter(Boolean)));
   repopularSelect(el.modalAtraso, new Set(registros.map((r) => r.Atrasado).filter(Boolean)));
@@ -332,6 +350,8 @@ function abrirModalEstagio(registros, estagio, grupoLabel, statusNome) {
   el.modalBusca.value = "";
   el.modalSegmento.value = "";
   el.modalRegime.value = "";
+  el.modalPrioridade.value = "";
+  el.modalDocSituacao.value = "";
   el.modalCompetencia.value = "";
   el.modalStatus.value = "";
   el.modalAtraso.value = "";
@@ -347,6 +367,7 @@ function abrirModalEstagio(registros, estagio, grupoLabel, statusNome) {
 function renderizarModalTabela() {
   const camposModal = {
     busca: el.modalBusca, segmento: el.modalSegmento, regime: el.modalRegime,
+    prioridade: el.modalPrioridade, docSituacao: el.modalDocSituacao,
     competencia: el.modalCompetencia, status: el.modalStatus, atraso: el.modalAtraso,
     gerente: el.modalGerente,
   };
@@ -361,7 +382,7 @@ function renderizarModalTabela() {
   el.modalEstagioSub.textContent = partes.join(" · ");
 
   if (!filtrados.length) {
-    el.modalEstagioCorpo.innerHTML = `<tr><td colspan="10" class="modal-vazio">Nenhum registro.</td></tr>`;
+    el.modalEstagioCorpo.innerHTML = `<tr><td colspan="11" class="modal-vazio">Nenhum registro.</td></tr>`;
     return;
   }
   const ordenados = [...filtrados].sort((a, b) =>
@@ -605,10 +626,11 @@ function linhaTabela(r) {
     <tr>
       ${tdCel(r._cli)}
       ${tdCel(r.Grupo)}
-      ${tdCel(r.Segmento)}
       ${tdCel(r.GerenteDeContas)}
       ${tdCel(r.Departamento)}
       ${tdCel(r.RegimeTributario)}
+      ${tdCel(r.Prioridade)}
+      ${tdCel(r.DocumentosSituacao)}
       ${tdCel(r._comp)}
       ${tdCel(r._venc)}
       ${tdCel(r.Status)}
@@ -812,6 +834,8 @@ function limparFiltrosGerais() {
   el.busca.value = "";
   el.segmento.value = "";
   el.regime.value = "";
+  el.prioridade.value = "";
+  el.docSituacao.value = "";
   el.competencia.value = "";
   el.status_.value = "";
   el.atraso.value = "";
@@ -822,6 +846,8 @@ function limparFiltrosTabela() {
   el.tBusca.value = "";
   el.tSegmento.value = "";
   el.tRegime.value = "";
+  el.tPrioridade.value = "";
+  el.tDocSituacao.value = "";
   el.tCompetencia.value = "";
   el.tStatus.value = "";
   el.tAtraso.value = "";
@@ -841,12 +867,16 @@ function atualizarCorpoDashboard() {
   const competencias = new Set(dadosEscopo.map((r) => r.Competencia && r.Competencia.slice(0, 7)).filter(Boolean));
   repopularSelect(el.segmento, new Set(dadosEscopo.map((r) => r.Segmento).filter(Boolean)));
   repopularSelect(el.regime, new Set(dadosEscopo.map((r) => r.RegimeTributario).filter(Boolean)));
+  repopularSelect(el.prioridade, new Set(dadosEscopo.map((r) => r.Prioridade).filter(Boolean)));
+  repopularSelect(el.docSituacao, new Set(dadosEscopo.map((r) => r.DocumentosSituacao).filter(Boolean)));
   repopularSelect(el.competencia, competencias, formatarCompetenciaMes);
   repopularSelect(el.gerente, new Set(dadosEscopo.map((r) => r.GerenteDeContas).filter(Boolean)));
   repopularSelect(el.status_, new Set(dadosEscopo.map((r) => r.Status).filter(Boolean)));
   repopularSelect(el.atraso, new Set(dadosEscopo.map((r) => r.Atrasado).filter(Boolean)));
   repopularSelect(el.tSegmento, new Set(dadosEscopo.map((r) => r.Segmento).filter(Boolean)));
   repopularSelect(el.tRegime, new Set(dadosEscopo.map((r) => r.RegimeTributario).filter(Boolean)));
+  repopularSelect(el.tPrioridade, new Set(dadosEscopo.map((r) => r.Prioridade).filter(Boolean)));
+  repopularSelect(el.tDocSituacao, new Set(dadosEscopo.map((r) => r.DocumentosSituacao).filter(Boolean)));
   repopularSelect(el.tCompetencia, competencias, formatarCompetenciaMes);
   repopularSelect(el.tGerente, new Set(dadosEscopo.map((r) => r.GerenteDeContas).filter(Boolean)));
   repopularSelect(el.tStatus, new Set(dadosEscopo.map((r) => r.Status).filter(Boolean)));
@@ -969,7 +999,7 @@ function carregarDados() {
     });
 }
 
-[el.busca, el.segmento, el.regime, el.competencia, el.status_, el.atraso, el.gerente].forEach((campo) => {
+[el.busca, el.segmento, el.regime, el.prioridade, el.docSituacao, el.competencia, el.status_, el.atraso, el.gerente].forEach((campo) => {
   campo.addEventListener("input", aplicarFiltros);
   campo.addEventListener("change", aplicarFiltros);
 });
@@ -979,7 +1009,7 @@ el.limpar.addEventListener("click", () => {
   aplicarFiltros();
 });
 
-[el.tBusca, el.tSegmento, el.tRegime, el.tCompetencia, el.tStatus, el.tAtraso, el.tGerente].forEach((campo) => {
+[el.tBusca, el.tSegmento, el.tRegime, el.tPrioridade, el.tDocSituacao, el.tCompetencia, el.tStatus, el.tAtraso, el.tGerente].forEach((campo) => {
   campo.addEventListener("input", aplicarFiltroTabela);
   campo.addEventListener("change", aplicarFiltroTabela);
 });
@@ -1005,7 +1035,7 @@ el.modalEstagio.addEventListener("click", (evento) => {
 document.addEventListener("keydown", (evento) => {
   if (evento.key === "Escape" && !el.modalEstagio.classList.contains("oculto")) fecharModalEstagio();
 });
-[el.modalBusca, el.modalSegmento, el.modalRegime, el.modalCompetencia,
+[el.modalBusca, el.modalSegmento, el.modalRegime, el.modalPrioridade, el.modalDocSituacao, el.modalCompetencia,
   el.modalStatus, el.modalAtraso, el.modalGerente].forEach((campo) => {
   campo.addEventListener("input", renderizarModalTabela);
   campo.addEventListener("change", renderizarModalTabela);

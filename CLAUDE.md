@@ -108,5 +108,14 @@ O card "Por Regime Tributário" e os placares "Pendente"/"Atrasadas" são clicá
   3. **`content-visibility: auto` + `contain-intrinsic-size` nas `tbody tr`** (CSS): o navegador pula layout/paint das linhas fora da viewport. Ctrl+F e scroll continuam normais.
   Resultado: clique bloqueia ~25ms (era ~830ms).
 
+### Colunas "Prioridade" / "Doc. Situação" — Relatório de Distribuição (2026-09-04)
+Duas colunas novas na tabela (e no modal), vindas de fora do robô deste projeto: o **Relatório de Distribuição** (Intranet > MG Controle > Relatórios > "Rel. Distribuição"), uma planilha pesada (~6,4 mil clientes × 44 colunas) que **não** é extraída por este projeto — é baixada 1x/mês (aprox.) pelo hub [[project_atualizacao_de_bases]] via o relatório próprio `rel_distribuicao` (botão manual, fora do "Roda Tudo"; ver `backend/relatorios/rel_distribuicao.py` no hub). Esse extrator reduz o bruto pra um cache slim (3 colunas: `ID`, `Prioridade`, `DocumentosSituacao`, deduplicado) e grava direto em `data/analise_sped/distribuicao.xlsx` — gitignorado (a exceção do `.gitignore` só libera o `resumo.xlsx`), nunca versionado, só um input de build local.
+
+`backend/orquestrador.py::_juntar_distribuicao(df, log)` faz o LEFT JOIN desse cache no `df` (depois de `resumo.gerar_resumo()`, antes de regravar via `resumo._escrever_resumo(df)`), por **`IdCliente`** — não `Id` (que é o id da obrigação/linha do SPED). `IdCliente` bate 100% com a coluna `ID` do relatório de distribuição (validado com dado real 2026-09-04: matriz e filial têm `ID` próprio cada uma no relatório de distribuição, não precisa consolidar). Não-bloqueante: cache ausente = as 2 colunas ficam vazias, resto do pipeline segue.
+
+Front: `linhaTabela()` ganhou `tdCel(r.Prioridade)`/`tdCel(r.DocumentosSituacao)` (entre Regime e Competência); `<colgroup>`/`<thead>` das duas tabelas (`#tabela` e `.modal-tabela`) viraram **12 colunas**. Valores reais: `Prioridade` = `AA/A/B/C/D/E` (66% em branco); `DocumentosSituacao` = `*F/AF/BF/CF/DF/EF` (86% em branco) — ambos texto curto, `celula()` já trata blank como "—".
+
+**Filtros Prioridade/Doc. Situação adicionados nos 3 blocos** (geral `f-*`, tabela `t-*`, modal `modal-estagio-*`) — mesmo padrão dos outros filtros: `el.prioridade`/`el.docSituacao` (+ `t`/`modal` prefixos), `filtrarConjunto()`, `CAMPO_PARA_FILTROS`, `sincronizarFiltroTabelaComGeral()`, `limparFiltrosGerais()`/`limparFiltrosTabela()`, `repopularSelect()` em `atualizarCorpoDashboard()` e em `abrirModalEstagio()`. Validado ao vivo via JS direto no console (browser automation com clique após `navigate` estava flaky nesta sessão — confirmado via `el.filtrados.length`/`el.contagem.textContent` em vez de screenshot).
+
 ### Cores — regra fixa
 **Nunca verde/âmbar para status.** Só rampa de vermelho MG, igual a todos os outros dashboards MG — ver [[feedback_mg_dashboards_red_only_palette]].

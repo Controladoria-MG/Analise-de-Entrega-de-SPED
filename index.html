@@ -65,6 +65,14 @@
             <select id="f-regime" class="filtro-select"><option value="">Todos</option></select>
           </div>
           <div class="filtro-grupo">
+            <label class="filtro-label" for="f-prioridade">Prioridade</label>
+            <select id="f-prioridade" class="filtro-select"><option value="">Todas</option></select>
+          </div>
+          <div class="filtro-grupo">
+            <label class="filtro-label" for="f-doc-situacao">Doc. Situação</label>
+            <select id="f-doc-situacao" class="filtro-select"><option value="">Todas</option></select>
+          </div>
+          <div class="filtro-grupo">
             <label class="filtro-label" for="f-competencia">Competência</label>
             <select id="f-competencia" class="filtro-select"><option value="">Todas</option></select>
           </div>
@@ -119,6 +127,14 @@
             <select id="t-regime" class="filtro-select"><option value="">Todos</option></select>
           </div>
           <div class="filtro-grupo">
+            <label class="filtro-label" for="t-prioridade">Prioridade</label>
+            <select id="t-prioridade" class="filtro-select"><option value="">Todas</option></select>
+          </div>
+          <div class="filtro-grupo">
+            <label class="filtro-label" for="t-doc-situacao">Doc. Situação</label>
+            <select id="t-doc-situacao" class="filtro-select"><option value="">Todas</option></select>
+          </div>
+          <div class="filtro-grupo">
             <label class="filtro-label" for="t-competencia">Competência</label>
             <select id="t-competencia" class="filtro-select"><option value="">Todas</option></select>
           </div>
@@ -142,24 +158,26 @@
           <table id="tabela">
             <colgroup>
               <col style="width: 15%">
-              <col style="width: 10%">
-              <col style="width: 8%">
-              <col style="width: 11%">
               <col style="width: 9%">
-              <col style="width: 10%">
-              <col style="width: 9%">
-              <col style="width: 8%">
-              <col style="width: 8%">
               <col style="width: 12%">
+              <col style="width: 10%">
+              <col style="width: 8%">
+              <col style="width: 7%">
+              <col style="width: 6%">
+              <col style="width: 8%">
+              <col style="width: 8%">
+              <col style="width: 7%">
+              <col style="width: 10%">
             </colgroup>
             <thead>
               <tr>
                 <th>Cliente</th>
                 <th>Grupo</th>
-                <th>Segmento</th>
                 <th>Gerente de Contas</th>
                 <th>Departamento</th>
                 <th>Regime</th>
+                <th>Prioridade</th>
+                <th>Doc. Situação</th>
                 <th>Competência</th>
                 <th>Vencimento</th>
                 <th>Status</th>
@@ -193,6 +211,8 @@
         <input type="search" id="modal-estagio-busca" class="filtro-input" placeholder="Cliente ou grupo...">
         <select id="modal-estagio-segmento" class="filtro-select"><option value="">Todos os segmentos</option></select>
         <select id="modal-estagio-regime" class="filtro-select"><option value="">Todos os regimes</option></select>
+        <select id="modal-estagio-prioridade" class="filtro-select"><option value="">Todas as prioridades</option></select>
+        <select id="modal-estagio-doc-situacao" class="filtro-select"><option value="">Toda a doc. situação</option></select>
         <select id="modal-estagio-competencia" class="filtro-select"><option value="">Todas as competências</option></select>
         <select id="modal-estagio-status" class="filtro-select"><option value="">Todos os status</option></select>
         <select id="modal-estagio-atraso" class="filtro-select"><option value="">Atraso: todos</option></select>
@@ -202,24 +222,26 @@
         <table class="modal-tabela">
           <colgroup>
             <col style="width: 15%">
-            <col style="width: 10%">
-            <col style="width: 8%">
-            <col style="width: 11%">
             <col style="width: 9%">
-            <col style="width: 10%">
-            <col style="width: 9%">
-            <col style="width: 8%">
-            <col style="width: 8%">
             <col style="width: 12%">
+            <col style="width: 10%">
+            <col style="width: 8%">
+            <col style="width: 7%">
+            <col style="width: 6%">
+            <col style="width: 8%">
+            <col style="width: 8%">
+            <col style="width: 7%">
+            <col style="width: 10%">
           </colgroup>
           <thead>
             <tr>
               <th>Cliente</th>
               <th>Grupo</th>
-              <th>Segmento</th>
               <th>Gerente de Contas</th>
               <th>Departamento</th>
               <th>Regime</th>
+              <th>Prioridade</th>
+              <th>Doc. Situação</th>
               <th>Competência</th>
               <th>Vencimento</th>
               <th>Status</th>
