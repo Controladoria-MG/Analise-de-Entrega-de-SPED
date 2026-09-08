@@ -977,9 +977,12 @@ body.modal-aberto {
   color: var(--mg-vermelho);
 }
 
+/* Busca em cima (linha própria, largura total) + filtros embaixo, todos do
+   mesmo tamanho (grid, não flex — numa linha com sobra, o flex alongava só
+   os últimos itens, deixando o filtro desuniforme). */
 .modal-filtros {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 10px;
   padding: 12px 20px;
   border-bottom: 1px solid var(--borda);
@@ -987,11 +990,7 @@ body.modal-aberto {
 }
 
 .modal-filtros .filtro-input {
-  flex: 2 1 200px;
-}
-
-.modal-filtros .filtro-select {
-  flex: 1 1 150px;
+  grid-column: 1 / -1;
 }
 
 .modal-corpo {
