@@ -163,13 +163,22 @@ main {
   padding: 8px 20px;
 }
 
-.tipo-sped-abas {
+.tipo-sped-abas,
+.tabela-status-abas {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
 }
 
-.tipo-sped-aba {
+/* Abas Entregue / Pendente, no topo da tabela — mesmo padrão visual das
+   abas de Tipo SPED, mas escopadas só à tabela (não afetam os cards/KPIs
+   acima, que continuam usando o filtro geral "Status"). */
+.tabela-status-abas {
+  margin-bottom: 14px;
+}
+
+.tipo-sped-aba,
+.tabela-status-aba {
   font: inherit;
   font-size: 0.85rem;
   font-weight: 700;
@@ -182,12 +191,14 @@ main {
   transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
-.tipo-sped-aba:hover {
+.tipo-sped-aba:hover,
+.tabela-status-aba:hover {
   border-color: var(--mg-vermelho);
   color: var(--mg-vermelho);
 }
 
-.tipo-sped-aba.ativa {
+.tipo-sped-aba.ativa,
+.tabela-status-aba.ativa {
   background: var(--mg-vermelho);
   border-color: var(--mg-vermelho);
   color: #fff;

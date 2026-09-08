@@ -50,6 +50,7 @@ const el = {
   limpar: document.getElementById("f-limpar"),
   corpo: document.getElementById("tabela-corpo"),
   contagem: document.getElementById("contagem"),
+  tabelaStatusAbas: document.getElementById("tabela-status-abas"),
   quebraConteudo: document.getElementById("quebra-conteudo"),
   evolucaoGrafico: document.getElementById("evolucao-grafico"),
   // Filtro independente, só da tabela — não afeta KPIs/cards.
@@ -59,7 +60,6 @@ const el = {
   tPrioridade: document.getElementById("t-prioridade"),
   tDocSituacao: document.getElementById("t-doc-situacao"),
   tCompetencia: document.getElementById("t-competencia"),
-  tStatus: document.getElementById("t-status"),
   tAtraso: document.getElementById("t-atraso"),
   tGerente: document.getElementById("t-gerente"),
   tLimpar: document.getElementById("t-limpar"),
@@ -145,11 +145,12 @@ function aplicarFiltros() {
 }
 
 function aplicarFiltroTabela() {
-  filtradosTabela = filtrarConjunto(dadosEscopo, {
+  const filtradoSemStatus = filtrarConjunto(dadosEscopo, {
     busca: el.tBusca, segmento: el.tSegmento, regime: el.tRegime,
     prioridade: el.tPrioridade, docSituacao: el.tDocSituacao,
-    competencia: el.tCompetencia, status: el.tStatus, atraso: el.tAtraso, gerente: el.tGerente,
+    competencia: el.tCompetencia, status: { value: "" }, atraso: el.tAtraso, gerente: el.tGerente,
   });
+  filtradosTabela = filtradoSemStatus.filter((r) => r.Status === abaTabelaStatus);
   renderizarTabela();
 }
 
@@ -157,6 +158,39 @@ const ORDEM_STATUS = ["Entregue", "Pendente"];
 // Chaves fixas do contador de atraso — sempre presentes (contagem 0 quando
 // não ocorrem no grupo) pra renderizarCorpoQuebra não precisar checar null.
 const ORDEM_ATRASO = ["No Prazo", "Atrasado"];
+
+// ── Abas Entregue / Pendente da tabela (2026-09-04, a pedido do usuário) ──
+// A TABELA (só ela — os cards/KPIs acima continuam com o filtro geral
+// "Status") sempre mostra um status por vez, escolhido nestas abas — mesma
+// ideia das abas de Tipo SPED, só que escopada à seção da tabela. Substitui
+// o antigo <select id="t-status">.
+const ABA_STATUS_PADRAO = "Pendente";
+let abaTabelaStatus = ABA_STATUS_PADRAO;
+
+function renderizarTabelaStatusAbas() {
+  el.tabelaStatusAbas.innerHTML = ORDEM_STATUS
+    .map((status) => `<button type="button" class="tabela-status-aba" data-valor="${status}" role="tab">${status}</button>`)
+    .join("");
+
+  el.tabelaStatusAbas.querySelectorAll(".tabela-status-aba").forEach((botao) => {
+    botao.addEventListener("click", () => {
+      if (botao.dataset.valor === abaTabelaStatus) return;
+      definirAbaTabelaStatus(botao.dataset.valor);
+      aplicarFiltroTabela();
+    });
+  });
+
+  definirAbaTabelaStatus(abaTabelaStatus);
+}
+
+function definirAbaTabelaStatus(status) {
+  abaTabelaStatus = status;
+  el.tabelaStatusAbas.querySelectorAll(".tabela-status-aba").forEach((botao) => {
+    const ativa = botao.dataset.valor === status;
+    botao.classList.toggle("ativa", ativa);
+    botao.setAttribute("aria-selected", ativa ? "true" : "false");
+  });
+}
 
 function criarContadorAtraso() {
   const atraso = new Map();
@@ -209,7 +243,8 @@ const CAMPO_PARA_FILTROS = {
   Prioridade: () => [el.prioridade, el.tPrioridade],
   DocumentosSituacao: () => [el.docSituacao, el.tDocSituacao],
   Competencia: () => [el.competencia, el.tCompetencia],
-  Status: () => [el.status_, el.tStatus],
+  // Status não tem select na tabela (virou aba) — só o campo geral.
+  Status: () => [el.status_],
   Atrasado: () => [el.atraso, el.tAtraso],
   GerenteDeContas: () => [el.gerente, el.tGerente],
 };
@@ -227,7 +262,11 @@ function sincronizarFiltroTabelaComGeral() {
   el.tPrioridade.value = el.prioridade.value;
   el.tDocSituacao.value = el.docSituacao.value;
   el.tCompetencia.value = el.competencia.value;
-  el.tStatus.value = el.status_.value;
+  // Status não é copiado pra um select — troca a aba da tabela, só quando o
+  // clique realmente fixou um Status (ex.: placares Pendente/Atrasadas). Um
+  // clique em outro campo (ex.: Regime) limpa o filtro geral de Status pra
+  // "" e não deve mexer na aba já selecionada.
+  if (el.status_.value) definirAbaTabelaStatus(el.status_.value);
   el.tAtraso.value = el.atraso.value;
   el.tGerente.value = el.gerente.value;
 }
@@ -849,9 +888,9 @@ function limparFiltrosTabela() {
   el.tPrioridade.value = "";
   el.tDocSituacao.value = "";
   el.tCompetencia.value = "";
-  el.tStatus.value = "";
   el.tAtraso.value = "";
   el.tGerente.value = "";
+  definirAbaTabelaStatus(ABA_STATUS_PADRAO);
 }
 
 // Corpo do dashboard (Filtros, Por Regime Tributário, Evolução,
@@ -879,7 +918,6 @@ function atualizarCorpoDashboard() {
   repopularSelect(el.tDocSituacao, new Set(dadosEscopo.map((r) => r.DocumentosSituacao).filter(Boolean)));
   repopularSelect(el.tCompetencia, competencias, formatarCompetenciaMes);
   repopularSelect(el.tGerente, new Set(dadosEscopo.map((r) => r.GerenteDeContas).filter(Boolean)));
-  repopularSelect(el.tStatus, new Set(dadosEscopo.map((r) => r.Status).filter(Boolean)));
   repopularSelect(el.tAtraso, new Set(dadosEscopo.map((r) => r.Atrasado).filter(Boolean)));
 
   aplicarFiltros();
@@ -1009,7 +1047,7 @@ el.limpar.addEventListener("click", () => {
   aplicarFiltros();
 });
 
-[el.tBusca, el.tSegmento, el.tRegime, el.tPrioridade, el.tDocSituacao, el.tCompetencia, el.tStatus, el.tAtraso, el.tGerente].forEach((campo) => {
+[el.tBusca, el.tSegmento, el.tRegime, el.tPrioridade, el.tDocSituacao, el.tCompetencia, el.tAtraso, el.tGerente].forEach((campo) => {
   campo.addEventListener("input", aplicarFiltroTabela);
   campo.addEventListener("change", aplicarFiltroTabela);
 });
@@ -1051,5 +1089,6 @@ window.addEventListener("resize", () => {
   resizeTimeout = setTimeout(renderizarEvolucao, 200);
 });
 
+renderizarTabelaStatusAbas();
 carregarStatus();
 carregarDados();
