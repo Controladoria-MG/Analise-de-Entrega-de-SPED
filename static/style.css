@@ -163,22 +163,13 @@ main {
   padding: 8px 20px;
 }
 
-.tipo-sped-abas,
-.tabela-status-abas {
+.tipo-sped-abas {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
 }
 
-/* Abas Entregue / Pendente, no topo da tabela — mesmo padrão visual das
-   abas de Tipo SPED, mas escopadas só à tabela (não afetam os cards/KPIs
-   acima, que continuam usando o filtro geral "Status"). */
-.tabela-status-abas {
-  margin-bottom: 14px;
-}
-
-.tipo-sped-aba,
-.tabela-status-aba {
+.tipo-sped-aba {
   font: inherit;
   font-size: 0.85rem;
   font-weight: 700;
@@ -191,13 +182,40 @@ main {
   transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
-.tipo-sped-aba:hover,
-.tabela-status-aba:hover {
+.tipo-sped-aba:hover {
   border-color: var(--mg-vermelho);
   color: var(--mg-vermelho);
 }
 
-.tipo-sped-aba.ativa,
+.tipo-sped-aba.ativa {
+  background: var(--mg-vermelho);
+  border-color: var(--mg-vermelho);
+  color: #fff;
+}
+
+/* Abas Entregue / Pendente, no topo da tabela — idêntico ao ".tabela-abas"
+   do Controle de Fechamentos (aba "presa" na tabela, não pílula). */
+.tabela-status-abas {
+  display: flex;
+  gap: 8px;
+  padding: 12px 12px 0;
+}
+
+.tabela-status-aba {
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 8px 22px;
+  border: 1.5px solid var(--borda);
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  background: var(--bg-card-alt);
+  color: var(--cinza-texto);
+  cursor: pointer;
+}
+
+.tabela-status-aba:hover { color: var(--mg-vermelho); }
+
 .tabela-status-aba.ativa {
   background: var(--mg-vermelho);
   border-color: var(--mg-vermelho);
