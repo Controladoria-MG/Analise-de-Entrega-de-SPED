@@ -200,7 +200,10 @@
           <h3 class="modal-titulo" id="modal-estagio-titulo"></h3>
           <p class="modal-sub" id="modal-estagio-sub"></p>
         </div>
-        <button type="button" class="modal-fechar" id="modal-estagio-fechar" aria-label="Fechar">&times;</button>
+        <div class="modal-cabecalho-acoes">
+          <button type="button" class="modal-exportar" id="modal-estagio-exportar">Exportar Excel</button>
+          <button type="button" class="modal-fechar" id="modal-estagio-fechar" aria-label="Fechar">&times;</button>
+        </div>
       </div>
       <!-- Mesmos filtros da tela principal (busca, Segmento, Regime, Competência,
            Status, Atraso, Gerente), na mesma ordem — reusam filtrarConjunto(). -->
@@ -252,6 +255,7 @@
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
   <script src="static/script.js"></script>
 </body>
 </html>

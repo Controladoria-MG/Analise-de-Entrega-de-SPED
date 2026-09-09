@@ -68,6 +68,7 @@ const el = {
   modalEstagioSub: document.getElementById("modal-estagio-sub"),
   modalEstagioCorpo: document.getElementById("modal-estagio-corpo"),
   modalEstagioFechar: document.getElementById("modal-estagio-fechar"),
+  modalEstagioExportar: document.getElementById("modal-estagio-exportar"),
   modalBusca: document.getElementById("modal-estagio-busca"),
   modalSegmento: document.getElementById("modal-estagio-segmento"),
   modalRegime: document.getElementById("modal-estagio-regime"),
@@ -365,6 +366,7 @@ let modalRegistros = [];
 let modalEstagioLabel = "";
 let modalGrupoLabel = "";
 let modalSubstantivo = "registro(s)";
+let modalEstagioFiltrados = []; // último recorte renderizado — o que "Exportar Excel" baixa
 
 function abrirModalEstagio(registros, estagio, grupoLabel, statusNome) {
   modalRegistros = registros;
@@ -421,14 +423,77 @@ function renderizarModalTabela() {
   el.modalEstagioSub.textContent = partes.join(" · ");
 
   if (!filtrados.length) {
+    modalEstagioFiltrados = [];
     el.modalEstagioCorpo.innerHTML = `<tr><td colspan="11" class="modal-vazio">Nenhum registro.</td></tr>`;
     return;
   }
   const ordenados = [...filtrados].sort((a, b) =>
     String(a.DataVencimento || "").localeCompare(String(b.DataVencimento || ""))
   );
+  modalEstagioFiltrados = ordenados;
   // Mesmas colunas da tabela principal — reaproveita linhaTabela().
   el.modalEstagioCorpo.innerHTML = ordenados.map(linhaTabela).join("");
+}
+
+// Baixa em .xlsx exatamente o que está na tela do modal (já filtrado pelos
+// 9 filtros do modal, mesmas 11 colunas da tabela), como uma Tabela do
+// Excel de verdade: faixas zebradas azuis + setinha de filtro em cada
+// coluna (tema `TableStyleMedium2`), via ExcelJS — mesmo padrão do
+// Controle de Fechamentos.
+async function exportarModalEstagioExcel() {
+  if (!modalEstagioFiltrados.length) return;
+
+  const linhas = modalEstagioFiltrados.map((r) => ({
+    Cliente: r._cli,
+    Grupo: celula(r.Grupo),
+    "Gerente de Contas": celula(r.GerenteDeContas),
+    Departamento: celula(r.Departamento),
+    Regime: celula(r.RegimeTributario),
+    Prioridade: celula(r.Prioridade),
+    "Doc. Situação": celula(r.DocumentosSituacao),
+    "Competência": r._comp,
+    Vencimento: r._venc,
+    Status: celula(r.Status),
+    "Estágio": celula(r.Estagio),
+  }));
+
+  const colunas = Object.keys(linhas[0] || {});
+
+  const livro = new ExcelJS.Workbook();
+  const planilha = livro.addWorksheet("Registros");
+
+  planilha.addTable({
+    name: "Registros",
+    ref: "A1",
+    headerRow: true,
+    style: { theme: "TableStyleMedium2", showRowStripes: true },
+    columns: colunas.map((nome) => ({ name: nome, filterButton: true })),
+    rows: linhas.map((l) => colunas.map((coluna) => l[coluna])),
+  });
+
+  colunas.forEach((coluna, i) => {
+    const largura =
+      linhas.reduce((max, l) => Math.max(max, String(l[coluna] ?? "").length), coluna.length) + 2;
+    planilha.getColumn(i + 1).width = largura;
+  });
+
+  const REGEX_DIACRITICOS = new RegExp("[\\u0300-\\u036f]", "g");
+  const nomeBase = (modalEstagioLabel || "registros")
+    .normalize("NFD")
+    .replace(REGEX_DIACRITICOS, "") // tira acento
+    .replace(/[^a-zA-Z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+
+  const buffer = await livro.xlsx.writeBuffer();
+  const blob = new Blob([buffer], {
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `${nomeBase || "registros"}.xlsx`;
+  link.click();
+  URL.revokeObjectURL(url);
 }
 
 function fecharModalEstagio() {
@@ -1067,6 +1132,7 @@ el.btnVoltarPainel.addEventListener("click", voltarUmaSecao);
 
 // Modal de estágio: fecha no X, no clique fora da caixa e no Esc.
 el.modalEstagioFechar.addEventListener("click", fecharModalEstagio);
+el.modalEstagioExportar.addEventListener("click", exportarModalEstagioExcel);
 el.modalEstagio.addEventListener("click", (evento) => {
   if (evento.target === el.modalEstagio) fecharModalEstagio();
 });
