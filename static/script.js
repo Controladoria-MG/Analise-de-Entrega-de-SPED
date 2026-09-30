@@ -793,6 +793,8 @@ function carregarStatus() {
     .catch(() => {});
 }
 
+const HINT_ATUALIZAR = 'Para atualizar seus dados recarregue a página usando "Ctrl+F5"';
+
 function atualizarCabecalho() {
   if (ultimaModificacao) {
     const d = ultimaModificacao;
@@ -803,7 +805,7 @@ function atualizarCabecalho() {
   const periodo = comps.length
     ? `SPED ${tipoSpedAtivo} das competências ${formatarCompetenciaMes(comps[0])} a ${formatarCompetenciaMes(comps[comps.length - 1])}`
     : "";
-  const partes = [textoAtualizacao, periodo].filter(Boolean);
+  const partes = [textoAtualizacao, periodo, HINT_ATUALIZAR].filter(Boolean);
   if (partes.length) el.status.innerHTML = partes.join('<span class="header-sep">|</span>');
   else el.status.textContent = "Nenhuma execução registrada ainda.";
 }

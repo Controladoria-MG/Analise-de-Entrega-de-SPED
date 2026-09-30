@@ -1070,3 +1070,9 @@ body.modal-aberto {
   text-align: center;
   color: var(--cinza-muted);
 }
+
+/* Linha de status do topbar nunca quebra linha (2026-09-30): sem espaço,
+   corta com reticências em vez de jogar o resto pra baixo. */
+.header-info { min-width: 0; }
+.header-status { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.btn-tema { flex-shrink: 0; }
