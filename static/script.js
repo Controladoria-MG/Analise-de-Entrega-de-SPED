@@ -773,16 +773,39 @@ function renderizarTabela() {
   setTimeout(proximoLote, 0);
 }
 
+// Cabeçalho igual ao do Controle de Tarefas: "Base atualizada em
+// dd/mm/aaaa hh:mm | SPED ICMS das competências mm/aaaa a mm/aaaa". A data
+// vem do Last-Modified do resumo.xlsx (o botão "Atualizar base" do servidor
+// só troca o .xlsx; o status.json não vai pro servidor) — sem ele, cai no
+// status.json. O período é a menor e a maior Competência do Tipo SPED ativo.
+let ultimaModificacao = null;
+let textoAtualizacao = "";
+
 function carregarStatus() {
   fetch("data/analise_sped/status.json?" + Date.now())
     .then((r) => r.json())
     .then((s) => {
+      if (ultimaModificacao) return;
       const data = new Date(s.ultima_execucao);
-      el.status.textContent = `Atualizado em ${data.toLocaleString("pt-BR")}`;
+      textoAtualizacao = `Atualizado em ${data.toLocaleString("pt-BR")}`;
+      atualizarCabecalho();
     })
-    .catch(() => {
-      el.status.textContent = "Nenhuma execução registrada ainda.";
-    });
+    .catch(() => {});
+}
+
+function atualizarCabecalho() {
+  if (ultimaModificacao) {
+    const d = ultimaModificacao;
+    const hora = d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+    textoAtualizacao = `Base atualizada em ${d.toLocaleDateString("pt-BR")} ${hora}`;
+  }
+  const comps = (dadosTipo || []).map((r) => r.Competencia && r.Competencia.slice(0, 7)).filter(Boolean).sort();
+  const periodo = comps.length
+    ? `SPED ${tipoSpedAtivo} das competências ${formatarCompetenciaMes(comps[0])} a ${formatarCompetenciaMes(comps[comps.length - 1])}`
+    : "";
+  const partes = [textoAtualizacao, periodo].filter(Boolean);
+  if (partes.length) el.status.innerHTML = partes.join('<span class="header-sep">|</span>');
+  else el.status.textContent = "Nenhuma execução registrada ainda.";
 }
 
 const MESES_ABREV = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
@@ -1060,6 +1083,7 @@ function selecionarTipoSped(tipo) {
   // Trocar de Tipo SPED volta pra tela de Unidades — evita manter
   // selecionada uma Unidade/Departamento que pode não existir no outro tipo.
   escopo = { unidade: null, depto: null };
+  atualizarCabecalho();
   atualizarNavegacao();
 }
 
@@ -1075,6 +1099,9 @@ function carregarDados() {
   fetch("data/analise_sped/resumo.xlsx?" + Date.now())
     .then((r) => {
       if (!r.ok) throw new Error("resumo.xlsx não encontrado");
+      const cab = r.headers.get("Last-Modified");
+      const lastMod = cab ? new Date(cab) : null;
+      if (lastMod && !isNaN(lastMod)) ultimaModificacao = lastMod;
       return r.arrayBuffer();
     })
     .then((buffer) => {
